@@ -58,18 +58,19 @@ async function handleGoalSetup(user: UserDocument, messageBody: string) {
             await updateUser(phone, { weight, goalSetupStep: "macros" });
             await sendWhatsAppMessage(
                 phone,
-                "Now, enter your daily nutrition goals separated by spaces:\nProtein (g) Calories Carbs (g) Fats (g)\n\nExample: 120 2000 250 70"
+                "Now enter your daily nutrition goals, one per line:\n\nProtein (g)\nCalories (kcal)\nCarbs (g)\nFats (g)\n\nExample:\n120\n2000\n250\n70"
             );
             return;
         }
 
         case "macros": {
-            const values = messageBody.trim().split(/\s+/).map(v => Number.parseInt(v, 10));
+            const lines = messageBody.trim().split(/\n/).filter(line => line.trim().length > 0);
+            const values = lines.map(v => Number.parseInt(v.trim(), 10));
             
             if (values.length !== 4 || values.some(v => !Number.isFinite(v) || v <= 0)) {
                 await sendWhatsAppMessage(
                     phone,
-                    "Please enter 4 valid numbers separated by spaces:\nProtein (g) Calories Carbs (g) Fats (g)\n\nExample: 120 2000 250 70"
+                    "Please enter 4 valid numbers, one per line:\n\nProtein (g)\nCalories (kcal)\nCarbs (g)\nFats (g)\n\nExample:\n120\n2000\n250\n70"
                 );
                 return;
             }
@@ -81,7 +82,7 @@ async function handleGoalSetup(user: UserDocument, messageBody: string) {
                 return;
             }
             if (calories < 500 || calories > 10000) {
-                await sendWhatsAppMessage(phone, "Calories should be between 500-10000. Please try again.");
+                await sendWhatsAppMessage(phone, "Calories should be between 500-10000 kcal. Please try again.");
                 return;
             }
             if (carbs < 20 || carbs > 1000) {
