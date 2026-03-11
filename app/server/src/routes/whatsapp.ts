@@ -1,6 +1,6 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
-import { analyzeFood, analyzeFoodFromImage, handleHealthScore, handleDailySummary, sendWeeklyReport, getOrCreateUser, updateUser } from "../services/index.js";
+import { analyzeFood, analyzeFoodFromImage, handleHealthScore, handleDailySummary, sendWeeklyReport, getOrCreateUser, updateUser, checkAndAlertGoals } from "../services/index.js";
 import { parseAIJson, downloadWhatsAppImage, sendWhatsAppMessage, sendMoreButton, sendMainOptions, logger } from "../utils/index.js";
 import { MealRepository } from "../database/index.js";
 import type { UserDocument } from "../schema/user.js";
@@ -75,7 +75,10 @@ async function handleGoalSetup(user: UserDocument, messageBody: string) {
                 return;
             }
 
-            const [protein, calories, carbs, fats] = values;
+            const protein = values[0]!;
+            const calories = values[1]!;
+            const carbs = values[2]!;
+            const fats = values[3]!;
 
             if (protein < 20 || protein > 500) {
                 await sendWhatsAppMessage(phone, "Protein should be between 20-500g. Please try again.");
@@ -262,6 +265,13 @@ router.post("/webhook/whatsapp", async (req: Request, res: Response) => {
                 logger.info("Meal saved successfully");
             } catch (dbError) {
                 logger.warn("Database save failed, continuing with response", dbError);
+            }
+            
+            // Check if any daily goals are reached (independent of save success)
+            try {
+                await checkAndAlertGoals(from);
+            } catch (goalError) {
+                logger.warn("Error checking goals:", goalError);
             }
         }
 
