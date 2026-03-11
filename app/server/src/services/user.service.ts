@@ -14,12 +14,7 @@ export type UserUpdatableFields = Partial<{
 }>;
 
 export async function getOrCreateUser(phone: string): Promise<UserDocument> {
-  const existing = await UserRepository.findByPhone(phone);
-  if (existing) {
-    return existing;
-  }
-
-  return UserRepository.create(phone);
+  return UserRepository.getOrCreate(phone);
 }
 
 export async function updateUser(phone: string, data: UserUpdatableFields): Promise<UserDocument | null> {
