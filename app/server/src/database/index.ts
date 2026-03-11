@@ -1,0 +1,1 @@
+export { MealRepository } from "./meal.repository.js";
