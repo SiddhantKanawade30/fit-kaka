@@ -1,9 +1,9 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
 import { analyzeFood, analyzeFoodFromImage, handleHealthScore, handleDailySummary, sendWeeklyReport, getOrCreateUser, updateUser } from "../services/index.js";
-import { parseAIJson, downloadWhatsAppImage, sendWhatsAppMessage, sendMoreButton, sendMainOptions, sendGoalOptions, logger } from "../utils/index.js";
+import { parseAIJson, downloadWhatsAppImage, sendWhatsAppMessage, sendMoreButton, sendMainOptions, logger } from "../utils/index.js";
 import { MealRepository } from "../database/index.js";
-import type { GoalType, UserDocument } from "../schema/user.js";
+import type { UserDocument } from "../schema/user.js";
 
 const router = Router();
 
@@ -15,32 +15,7 @@ function parsePositiveInt(value: string): number | null {
     return parsed;
 }
 
-function parseActivityLevel(input: string): "low" | "moderate" | "high" | null {
-    const normalized = input.trim().toLowerCase();
-    if (["low", "1", "sedentary", "light"].includes(normalized)) return "low";
-    if (["moderate", "2", "medium", "active"].includes(normalized)) return "moderate";
-    if (["high", "3", "very active"].includes(normalized)) return "high";
-    return null;
-}
-
-function parseGoalValue(buttonReply: string | undefined, text: string): GoalType | null {
-    if (buttonReply === "goal_weight_loss") return "weight_loss";
-    if (buttonReply === "goal_muscle_gain") return "muscle_gain";
-    if (buttonReply === "goal_maintain") return "maintain";
-
-    const normalized = text.trim().toLowerCase();
-    if (normalized.includes("weight") && normalized.includes("loss")) return "weight_loss";
-    if (normalized.includes("muscle") && normalized.includes("gain")) return "muscle_gain";
-    if (normalized.includes("maintain")) return "maintain";
-
-    if (normalized === "1") return "weight_loss";
-    if (normalized === "2") return "muscle_gain";
-    if (normalized === "3") return "maintain";
-
-    return null;
-}
-
-async function handleGoalSetup(user: UserDocument, messageBody: string, buttonReply?: string) {
+async function handleGoalSetup(user: UserDocument, messageBody: string) {
     const phone = user.phone;
     const currentStep = user.goalSetupStep;
 
@@ -80,42 +55,53 @@ async function handleGoalSetup(user: UserDocument, messageBody: string, buttonRe
                 return;
             }
 
-            await updateUser(phone, { weight, goalSetupStep: "activity" });
+            await updateUser(phone, { weight, goalSetupStep: "macros" });
             await sendWhatsAppMessage(
                 phone,
-                "What is your activity level? Reply with one option:\n1) low\n2) moderate\n3) high"
+                "Now, enter your daily nutrition goals separated by spaces:\nProtein (g) Calories Carbs (g) Fats (g)\n\nExample: 120 2000 250 70"
             );
             return;
         }
 
-        case "activity": {
-            const activityLevel = parseActivityLevel(messageBody);
-            if (!activityLevel) {
+        case "macros": {
+            const values = messageBody.trim().split(/\s+/).map(v => Number.parseInt(v, 10));
+            
+            if (values.length !== 4 || values.some(v => !Number.isFinite(v) || v <= 0)) {
                 await sendWhatsAppMessage(
                     phone,
-                    "Please choose a valid activity level:\n1) low\n2) moderate\n3) high"
+                    "Please enter 4 valid numbers separated by spaces:\nProtein (g) Calories Carbs (g) Fats (g)\n\nExample: 120 2000 250 70"
                 );
                 return;
             }
 
-            await updateUser(phone, { activityLevel, goalSetupStep: "goal" });
-            await sendGoalOptions(phone, "Awesome. Now choose your primary goal:");
-            return;
-        }
+            const [protein, calories, carbs, fats] = values;
 
-        case "goal": {
-            const goal = parseGoalValue(buttonReply, messageBody);
-            if (!goal) {
-                await sendGoalOptions(phone, "Please select one valid goal option:");
+            if (protein < 20 || protein > 500) {
+                await sendWhatsAppMessage(phone, "Protein should be between 20-500g. Please try again.");
+                return;
+            }
+            if (calories < 500 || calories > 10000) {
+                await sendWhatsAppMessage(phone, "Calories should be between 500-10000. Please try again.");
+                return;
+            }
+            if (carbs < 20 || carbs > 1000) {
+                await sendWhatsAppMessage(phone, "Carbs should be between 20-1000g. Please try again.");
+                return;
+            }
+            if (fats < 10 || fats > 500) {
+                await sendWhatsAppMessage(phone, "Fats should be between 10-500g. Please try again.");
                 return;
             }
 
             await updateUser(phone, {
-                goal,
+                dailyProteinIntake: protein,
+                dailyCalories: calories,
+                dailyCarbs: carbs,
+                dailyFats: fats,
                 goalProfileCompleted: true,
                 goalSetupStep: null,
             });
-            await sendWhatsAppMessage(phone, "Your goal profile has been saved. ✅");
+            await sendWhatsAppMessage(phone, "Goals are set ✅");
             return;
         }
     }
@@ -173,7 +159,7 @@ router.post("/webhook/whatsapp", async (req: Request, res: Response) => {
 
         // Resume onboarding if already active
         if (user.goalSetupStep) {
-            await handleGoalSetup(user, messageBody, buttonReply);
+            await handleGoalSetup(user, messageBody);
             return res.sendStatus(200);
         }
 
@@ -206,19 +192,7 @@ router.post("/webhook/whatsapp", async (req: Request, res: Response) => {
                 await updateUser(from, { goalSetupStep: "age" });
                 await sendWhatsAppMessage(from, "Let's set up your profile. How old are you?");
             } else {
-                await sendGoalOptions(from, "Choose your fitness goal:");
-            }
-            return res.sendStatus(200);
-        }
-
-        if (buttonReply === "goal_weight_loss" || buttonReply === "goal_muscle_gain" || buttonReply === "goal_maintain") {
-            // Goal changes after profile completion; do not restart onboarding
-            if (user.goalProfileCompleted) {
-                const selectedGoal = parseGoalValue(buttonReply, "");
-                if (selectedGoal) {
-                    await updateUser(from, { goal: selectedGoal });
-                    await sendWhatsAppMessage(from, "Goal updated successfully. 🎯");
-                }
+                await sendWhatsAppMessage(from, "Your goals are already set.");
             }
             return res.sendStatus(200);
         }

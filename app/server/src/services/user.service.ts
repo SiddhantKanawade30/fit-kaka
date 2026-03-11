@@ -1,12 +1,14 @@
 import { UserRepository } from "../database/index.js";
-import type { ActivityLevel, GoalSetupStep, GoalType, UserDocument } from "../schema/user.js";
+import type { GoalSetupStep, UserDocument } from "../schema/user.js";
 
 export type UserUpdatableFields = Partial<{
   age: number;
   height: number;
   weight: number;
-  activityLevel: ActivityLevel;
-  goal: GoalType;
+  dailyProteinIntake: number;
+  dailyCalories: number;
+  dailyCarbs: number;
+  dailyFats: number;
   goalProfileCompleted: boolean;
   goalSetupStep: GoalSetupStep | null;
 }>;

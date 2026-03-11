@@ -1,16 +1,16 @@
 import mongoose from "mongoose";
 
-export type ActivityLevel = "low" | "moderate" | "high";
-export type GoalType = "weight_loss" | "muscle_gain" | "maintain";
-export type GoalSetupStep = "age" | "height" | "weight" | "activity" | "goal";
+export type GoalSetupStep = "age" | "height" | "weight" | "macros";
 
 export interface UserDocument extends mongoose.Document {
 	phone: string;
 	age?: number;
 	height?: number;
 	weight?: number;
-	activityLevel?: ActivityLevel;
-	goal?: GoalType;
+	dailyProteinIntake?: number;
+	dailyCalories?: number;
+	dailyCarbs?: number;
+	dailyFats?: number;
 	goalProfileCompleted: boolean;
 	goalSetupStep: GoalSetupStep | null;
 }
@@ -21,18 +21,14 @@ const userSchema = new mongoose.Schema<UserDocument>(
 		age: { type: Number },
 		height: { type: Number },
 		weight: { type: Number },
-		activityLevel: {
-			type: String,
-			enum: ["low", "moderate", "high"],
-		},
-		goal: {
-			type: String,
-			enum: ["weight_loss", "muscle_gain", "maintain"],
-		},
+		dailyProteinIntake: { type: Number },
+		dailyCalories: { type: Number },
+		dailyCarbs: { type: Number },
+		dailyFats: { type: Number },
 		goalProfileCompleted: { type: Boolean, default: false },
 		goalSetupStep: {
 			type: String,
-			enum: ["age", "height", "weight", "activity", "goal", null],
+			enum: ["age", "height", "weight", "macros", null],
 			default: null,
 		},
 	},
