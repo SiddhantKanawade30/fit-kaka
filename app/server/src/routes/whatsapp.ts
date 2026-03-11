@@ -1,39 +1,11 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
-import { analyzeFood, analyzeFoodFromImage } from "../services/ai.service.js";
-import { parseAIJson } from "../utils/parseAI.js";
-import { saveMeal } from "../services/meal.service.js";
-import logger from "../utils/logger.js";
+import { analyzeFood, analyzeFoodFromImage, handleHealthScore, handleDailySummary, sendWeeklyReport } from "../services/index.js";
+import { parseAIJson, downloadWhatsAppImage, sendWhatsAppMessage, sendMoreButton, sendMainOptions, logger } from "../utils/index.js";
+import { MealRepository } from "../database/index.js";
 import axios from "axios";
 
 const router = Router();
-
-/**
- * Downloads image from Twilio URL with authentication, following redirects
- */
-async function downloadWhatsAppImage(imageId: string) {
-    const token = process.env.WHATSAPP_TOKEN;
-
-    const metaRes = await axios.get(
-        `https://graph.facebook.com/v19.0/${imageId}`,
-        {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        }
-    );
-
-    const imageUrl = metaRes.data.url;
-
-    const imageRes = await axios.get(imageUrl, {
-        responseType: "arraybuffer",
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    });
-
-    return Buffer.from(imageRes.data);
-}
 
 /**
  * Webhook verification (GET request)
@@ -57,24 +29,67 @@ router.get("/webhook/whatsapp", (req, res) => {
  */
 router.post("/webhook/whatsapp", async (req: Request, res: Response) => {
     const body = req.body;
-    const message =
-        req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+    const message = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
 
+    // Debug logging to understand the structure
+    logger.debug("Full webhook body:", JSON.stringify(body, null, 2));
+    
     if (!message) {
+        logger.info("No message found in webhook");
         return res.sendStatus(200);
     }
 
     const from = message.from;
     const messageBody = message.text?.body || "";
     const imageId = message.image?.id;
+    
+    // Handle both button reply structures
+    const buttonReply = message?.interactive?.button_reply?.id || 
+                       message?.interactive?.list_reply?.id ||
+                       message?.button?.payload;
 
     logger.info(`Message received from ${from}`);
+    logger.debug(`Button reply ID: ${buttonReply}`);
+    logger.debug(`Message body: ${messageBody}`);
 
     // For complex meals, send immediate acknowledgment
     const isComplexMeal = messageBody && messageBody.length > 50;
 
     try {
         let aiResponse: string | null = null;
+
+        if (messageBody.toLowerCase() === "weekly report") {
+            await sendWeeklyReport(from);
+            return res.sendStatus(200);
+        }
+
+        if (buttonReply === "more_options") {
+            logger.info("Sending main options");
+            await sendMainOptions(from);
+            return res.sendStatus(200);
+        }
+
+        if (buttonReply === "health_score") {
+            logger.info("Handling health score");
+            await handleHealthScore(from);   
+            return res.sendStatus(200);
+        }
+
+        if (buttonReply === "custom_diet") {
+            await sendWhatsAppMessage(from, "What is your goal?\n\n1️⃣ Weight Loss\n2️⃣ Muscle Gain\n3️⃣ Maintain Weight\n4️⃣ Healthy Eating");
+            return res.sendStatus(200);
+        }
+
+        if (buttonReply === "set_goal") {
+            await sendWhatsAppMessage(from, "Choose your fitness goal:\n\n1️⃣ Lose 5kg\n2️⃣ Gain Muscle\n3️⃣ Improve Nutrition");
+            return res.sendStatus(200);
+        }
+
+        if (buttonReply === "daily_summary") {
+            logger.info("Handling daily summary");
+            await handleDailySummary(from);
+            return res.sendStatus(200);
+        }
 
         // Handle image messages
         if (message.type === "image") {
@@ -130,7 +145,7 @@ router.post("/webhook/whatsapp", async (req: Request, res: Response) => {
         // Save to database if valid data
         if (nutrition.food !== "Could not analyze food") {
             try {
-                await saveMeal(from, nutrition);
+                await MealRepository.create(from, nutrition);
                 logger.info("Meal saved successfully");
             } catch (dbError) {
                 logger.warn("Database save failed, continuing with response", dbError);
@@ -145,7 +160,7 @@ router.post("/webhook/whatsapp", async (req: Request, res: Response) => {
             `🍞 *Carbs:* ${nutrition.carbs}g\n` +
             `🧈 *Fats:* ${nutrition.fats}g`;
 
-        await sendWhatsAppMessage(from, reply);
+        await sendMoreButton(from, reply);
         res.sendStatus(200);
 
     } catch (error) {
@@ -164,25 +179,5 @@ router.post("/webhook/whatsapp", async (req: Request, res: Response) => {
         res.sendStatus(200);
     }
 });
-
-async function sendWhatsAppMessage(to: string, text: string) {
-    const token = process.env.WHATSAPP_TOKEN;
-    const phoneNumberId = process.env.PHONE_NUMBER_ID;
-
-    await axios.post(
-        `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`,
-        {
-            messaging_product: "whatsapp",
-            to,
-            type: "text",
-            text: { body: text },
-        },
-        {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        }
-    );
-}
 
 export default router;
