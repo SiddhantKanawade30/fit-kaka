@@ -7,7 +7,6 @@ dotenv.config();
 
 const app = express();
 
-// Required for Twilio webhooks
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 

@@ -1,38 +1,116 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
-import { analyzeFood, analyzeFoodFromImage } from "../services/ai.service.js";
-import { parseAIJson } from "../utils/parseAI.js";
-import { saveMeal } from "../services/meal.service.js";
-import logger from "../utils/logger.js";
+import { analyzeFood, analyzeFoodFromImage, handleHealthScore, handleDailySummary, sendWeeklyReport, DietService, getOrCreateUser, updateUser, UserDataService } from "../services/index.js";
+import { parseAIJson, downloadWhatsAppImage, sendWhatsAppMessage, sendMoreButton, sendMainOptions, logger } from "../utils/index.js";
+import { MealRepository } from "../database/index.js";
 import axios from "axios";
+import type { UserDocument } from "../schema/user.js";
+import { checkAndAlertGoals } from "../services/index.js";
 
 const router = Router();
 
-/**
- * Downloads image from Twilio URL with authentication, following redirects
- */
-async function downloadWhatsAppImage(imageId: string) {
-    const token = process.env.WHATSAPP_TOKEN;
+function parsePositiveInt(value: string): number | null {
+    const parsed = Number.parseInt(value.trim(), 10);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+        return null;
+    }
+    return parsed;
+}
 
-    const metaRes = await axios.get(
-        `https://graph.facebook.com/v19.0/${imageId}`,
-        {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
+async function handleGoalSetup(user: UserDocument, messageBody: string) {
+    const phone = user.phone;
+    const currentStep = user.goalSetupStep;
+
+    if (!currentStep) {
+        return;
+    }
+
+    switch (currentStep) {
+        case "age": {
+            const age = parsePositiveInt(messageBody);
+            if (!age || age < 10 || age > 120) {
+                await sendWhatsAppMessage(phone, "Please enter a valid age in years (example: 25).");
+                return;
+            }
+
+            await updateUser(phone, { age, goalSetupStep: "height" });
+            await sendWhatsAppMessage(phone, "Great! What is your height in cm?");
+            return;
         }
-    );
 
-    const imageUrl = metaRes.data.url;
+        case "height": {
+            const height = parsePositiveInt(messageBody);
+            if (!height || height < 90 || height > 250) {
+                await sendWhatsAppMessage(phone, "Please enter a valid height in cm (example: 170).");
+                return;
+            }
 
-    const imageRes = await axios.get(imageUrl, {
-        responseType: "arraybuffer",
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    });
+            await updateUser(phone, { height, goalSetupStep: "weight" });
+            await sendWhatsAppMessage(phone, "Got it. What is your current weight in kg?");
+            return;
+        }
 
-    return Buffer.from(imageRes.data);
+        case "weight": {
+            const weight = parsePositiveInt(messageBody);
+            if (!weight || weight < 20 || weight > 400) {
+                await sendWhatsAppMessage(phone, "Please enter a valid weight in kg (example: 70).");
+                return;
+            }
+
+            await updateUser(phone, { weight, goalSetupStep: "macros" });
+            await sendWhatsAppMessage(
+                phone,
+                "Now enter your daily nutrition goals, one per line:\n\nProtein (g)\nCalories (kcal)\nCarbs (g)\nFats (g)\n\nExample:\n120\n2000\n250\n70"
+            );
+            return;
+        }
+
+        case "macros": {
+            const lines = messageBody.trim().split(/\n/).filter(line => line.trim().length > 0);
+            const values = lines.map(v => Number.parseInt(v.trim(), 10));
+            
+            if (values.length !== 4 || values.some(v => !Number.isFinite(v) || v <= 0)) {
+                await sendWhatsAppMessage(
+                    phone,
+                    "Please enter 4 valid numbers, one per line:\n\nProtein (g)\nCalories (kcal)\nCarbs (g)\nFats (g)\n\nExample:\n120\n2000\n250\n70"
+                );
+                return;
+            }
+
+            const protein = values[0]!;
+            const calories = values[1]!;
+            const carbs = values[2]!;
+            const fats = values[3]!;
+
+            if (protein < 20 || protein > 500) {
+                await sendWhatsAppMessage(phone, "Protein should be between 20-500g. Please try again.");
+                return;
+            }
+            if (calories < 500 || calories > 10000) {
+                await sendWhatsAppMessage(phone, "Calories should be between 500-10000 kcal. Please try again.");
+                return;
+            }
+            if (carbs < 20 || carbs > 1000) {
+                await sendWhatsAppMessage(phone, "Carbs should be between 20-1000g. Please try again.");
+                return;
+            }
+            if (fats < 10 || fats > 500) {
+                await sendWhatsAppMessage(phone, "Fats should be between 10-500g. Please try again.");
+                return;
+            }
+
+            await updateUser(phone, {
+                dailyProteinIntake: protein,
+                dailyCalories: calories,
+                dailyCarbs: carbs,
+                dailyFats: fats,
+                goalProfileCompleted: true,
+                goalSetupStep: null,
+            });
+            await sendWhatsAppMessage(phone, "Goals are set ✅");
+            return;
+        }
+    }
 }
 
 /**
@@ -57,24 +135,114 @@ router.get("/webhook/whatsapp", (req, res) => {
  */
 router.post("/webhook/whatsapp", async (req: Request, res: Response) => {
     const body = req.body;
-    const message =
-        req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+    const message = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
 
+    // Debug logging to understand the structure
+    logger.debug("Full webhook body:", JSON.stringify(body, null, 2));
+    
     if (!message) {
+        logger.info("No message found in webhook");
         return res.sendStatus(200);
     }
 
     const from = message.from;
     const messageBody = message.text?.body || "";
-    const imageId = message.image?.id;
+    
+    // Handle both button reply structures
+    const buttonReply = message?.interactive?.button_reply?.id || 
+                       message?.interactive?.list_reply?.id ||
+                       message?.button?.payload;
 
     logger.info(`Message received from ${from}`);
+    logger.debug(`Button reply ID: ${buttonReply}`);
+    logger.debug(`Message body: ${messageBody}`);
 
     // For complex meals, send immediate acknowledgment
     const isComplexMeal = messageBody && messageBody.length > 50;
 
     try {
+        const user = await getOrCreateUser(from);
+
+        // Resume onboarding if already active
+        if (user.goalSetupStep) {
+            await handleGoalSetup(user, messageBody);
+            return res.sendStatus(200);
+        }
+
         let aiResponse: string | null = null;
+
+        // Handle weight loss data collection responses
+        if (messageBody.match(/^\d+\.?\d*$/) || messageBody.toLowerCase().match(/^(1|2|yes|no|vegetarian|non-vegetarian)$/)) {
+            // Check if user is in weight loss data collection mode
+            const userDataStatus = await UserDataService.getUserDataStatus(from);
+            if (userDataStatus.nextQuestion) {
+                await UserDataService.handleWeightLossResponse(from, messageBody);
+                return res.sendStatus(200);
+            }
+        }
+
+        // Handle custom diet flow responses
+        if (messageBody.match(/^[1-4]$/) || messageBody.toLowerCase().match(/^(weight_loss|weight_gain|muscle_gain|maintain_weight)$/)) {
+            // This is a goal selection response
+            const result = await DietService.handleDietGoal(from, messageBody);
+            return res.sendStatus(200);
+        }
+
+        if (messageBody.toLowerCase().match(/^(1|2|yes|no|vegetarian|non-vegetarian)$/)) {
+            // This is a vegetarian status response
+            // We need to get the goal from the previous step - for now, we'll handle it simply
+            const vegetarian = messageBody.toLowerCase() === '1' || 
+                             messageBody.toLowerCase() === 'yes' || 
+                             messageBody.toLowerCase() === 'vegetarian';
+            
+            // For now, assume weight loss goal - in production, you'd track the user's state
+            await DietService.handleVegetarianStatus(from, messageBody, '1');
+            return res.sendStatus(200);
+        }
+
+        // Handle existing diet plan responses
+        if (messageBody.match(/^[1-3]$/) && buttonReply === "custom_diet") {
+            await DietService.handleExistingDiet(from, messageBody);
+            return res.sendStatus(200);
+        }
+
+        if (messageBody.toLowerCase() === "weekly report") {
+            await sendWeeklyReport(from);
+            return res.sendStatus(200);
+        }
+
+        if (buttonReply === "more_options") {
+            logger.info("Sending main options");
+            await sendMainOptions(from);
+            return res.sendStatus(200);
+        }
+
+        if (buttonReply === "health_score") {
+            logger.info("Handling health score");
+            await handleHealthScore(from);   
+            return res.sendStatus(200);
+        }
+
+        if (buttonReply === "custom_diet") {
+            const result = await DietService.handleCustomDiet(from);
+            return res.sendStatus(200);
+        }
+
+        if (buttonReply === "set_goal") {
+            if (!user.goalProfileCompleted) {
+                await updateUser(from, { goalSetupStep: "age" });
+                await sendWhatsAppMessage(from, "Let's set up your profile. How old are you?");
+            } else {
+                await sendWhatsAppMessage(from, "Your goals are already set.");
+            }
+            return res.sendStatus(200);
+        }
+
+        if (buttonReply === "daily_summary") {
+            logger.info("Handling daily summary");
+            await handleDailySummary(from);
+            return res.sendStatus(200);
+        }
 
         // Handle image messages
         if (message.type === "image") {
@@ -101,6 +269,18 @@ router.post("/webhook/whatsapp", async (req: Request, res: Response) => {
         } else {
             // Handle text messages
             logger.info("Processing text message");
+
+            // Check if this is a diet-related keyword first
+            const dietKeywords = ['weight loss', 'weight_gain', 'weight gain', 'muscle gain', 'muscle_gain', 'maintain weight', 'maintain_weight'];
+            const isDietKeyword = dietKeywords.some(keyword => 
+                messageBody.toLowerCase().trim() === keyword.toLowerCase()
+            );
+
+            if (isDietKeyword) {
+                // Handle as diet goal selection
+                const result = await DietService.handleDietGoal(from, messageBody);
+                return res.sendStatus(200);
+            }
 
             // Dynamic timeout based on message complexity
             const timeoutMs = isComplexMeal ? 30000 : 20000; // 30s for complex, 20s for simple
@@ -130,10 +310,17 @@ router.post("/webhook/whatsapp", async (req: Request, res: Response) => {
         // Save to database if valid data
         if (nutrition.food !== "Could not analyze food") {
             try {
-                await saveMeal(from, nutrition);
+                await MealRepository.create(from, nutrition);
                 logger.info("Meal saved successfully");
             } catch (dbError) {
                 logger.warn("Database save failed, continuing with response", dbError);
+            }
+            
+            // Check if any daily goals are reached (independent of save success)
+            try {
+                await checkAndAlertGoals(from);
+            } catch (goalError) {
+                logger.warn("Error checking goals:", goalError);
             }
         }
 
@@ -145,7 +332,7 @@ router.post("/webhook/whatsapp", async (req: Request, res: Response) => {
             `🍞 *Carbs:* ${nutrition.carbs}g\n` +
             `🧈 *Fats:* ${nutrition.fats}g`;
 
-        await sendWhatsAppMessage(from, reply);
+        await sendMoreButton(from, reply);
         res.sendStatus(200);
 
     } catch (error) {
@@ -164,25 +351,5 @@ router.post("/webhook/whatsapp", async (req: Request, res: Response) => {
         res.sendStatus(200);
     }
 });
-
-async function sendWhatsAppMessage(to: string, text: string) {
-    const token = process.env.WHATSAPP_TOKEN;
-    const phoneNumberId = process.env.PHONE_NUMBER_ID;
-
-    await axios.post(
-        `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`,
-        {
-            messaging_product: "whatsapp",
-            to,
-            type: "text",
-            text: { body: text },
-        },
-        {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        }
-    );
-}
 
 export default router;
