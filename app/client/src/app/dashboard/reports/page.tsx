@@ -35,7 +35,7 @@ export default function ReportsPage() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button className="w-full bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-950/20 dark:hover:bg-red-950/40 dark:text-red-400 group-hover:bg-red-600 group-hover:text-white transition-colors duration-300">
+            <Button className="w-full bg-red-600 hover:bg-red-700 text-white dark:bg-red-950/20 dark:hover:bg-red-950/40 dark:text-red-400 transition-colors duration-300">
               <Download className="mr-2 size-4" /> Download PDF
             </Button>
           </CardFooter>
@@ -62,7 +62,7 @@ export default function ReportsPage() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button className="w-full bg-green-50 hover:bg-green-100 text-green-600 dark:bg-green-950/20 dark:hover:bg-green-950/40 dark:text-green-400 group-hover:bg-green-600 group-hover:text-white transition-colors duration-300">
+            <Button className="w-full bg-green-600 hover:bg-green-700 text-white dark:bg-green-950/20 dark:hover:bg-green-950/40 dark:text-green-400 transition-colors duration-300">
               <Download className="mr-2 size-4" /> Export Excel
             </Button>
           </CardFooter>
