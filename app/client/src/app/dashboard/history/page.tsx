@@ -3,15 +3,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Flame, Activity, Calendar } from "lucide-react"
+import { fullMealHistory } from "@/data/dashboardData"
 
 export default function MealHistoryPage() {
-  const history = [
-    { id: 1, date: "2026-03-11", meal: "Paneer Butter Masala", calories: 650, protein: "24g", image: "https://images.unsplash.com/photo-1517673132405-a56a62b18caf?q=80&w=150&auto=format&fit=crop" },
-    { id: 2, date: "2026-03-11", meal: "2 Rotis", calories: 240, protein: "6g", image: "https://images.unsplash.com/photo-1584278858231-3561ec90967c?q=80&w=150&auto=format&fit=crop" },
-    { id: 3, date: "2026-03-10", meal: "Chicken Rice Bowl", calories: 520, protein: "32g", image: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?q=80&w=150&auto=format&fit=crop" },
-    { id: 4, date: "2026-03-10", meal: "Oatmeal with Berries", calories: 320, protein: "12g", image: "https://images.unsplash.com/photo-1517673132405-a56a62b18caf?q=80&w=150&auto=format&fit=crop" },
-    { id: 5, date: "2026-03-09", meal: "Grilled Salmon & Veggies", calories: 450, protein: "40g", image: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?q=80&w=150&auto=format&fit=crop" },
-  ]
 
   return (
     <div className="flex flex-col w-full animate-in fade-in duration-500">
@@ -40,23 +34,19 @@ export default function MealHistoryPage() {
               <thead className="text-xs text-muted-foreground uppercase bg-neutral-50 dark:bg-neutral-900 border-b border-border/50">
                 <tr>
                   <th className="px-6 py-4 font-semibold tracking-wider">Date</th>
-                  <th className="px-6 py-4 font-semibold tracking-wider">Food Image</th>
                   <th className="px-6 py-4 font-semibold tracking-wider">Meal</th>
                   <th className="px-6 py-4 font-semibold tracking-wider text-right">Calories</th>
                   <th className="px-6 py-4 font-semibold tracking-wider text-right">Protein</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/40">
-                {history.map((item) => (
+                {fullMealHistory.map((item) => (
                   <tr key={item.id} className="bg-white dark:bg-zinc-950 hover:bg-neutral-50 dark:hover:bg-neutral-900/40 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Calendar className="size-3" />
                         <span>{item.date}</span>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <img src={item.image} alt={item.meal} className="w-12 h-12 rounded-lg object-cover shadow-sm bg-neutral-100" />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="font-medium text-foreground text-sm">{item.meal}</span>

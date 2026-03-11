@@ -11,25 +11,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { 
-  LayoutDashboard, 
-  Utensils, 
-  History, 
-  PieChart, 
-  Target, 
-  Sparkles, 
-  User, 
-  FileText,
-  Activity
-} from "lucide-react"
-
-const navItems = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Meal History", url: "/dashboard/history", icon: History },
-  { title: "Nutrition Analytics", url: "/dashboard/analytics", icon: PieChart },
-  { title: "Health Profile", url: "/dashboard/profile", icon: User },
-  { title: "Reports", url: "/dashboard/reports", icon: FileText },
-]
+import { Activity } from "lucide-react"
+import { sidebarNavigation } from "@/data/dashboardData"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
@@ -54,7 +37,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent className="px-2 py-4 gap-2">
         <SidebarMenu>
-          {navItems.map((item) => {
+          {sidebarNavigation.map((item) => {
             const isActive = pathname === item.url
             return (
               <SidebarMenuItem key={item.title}>
