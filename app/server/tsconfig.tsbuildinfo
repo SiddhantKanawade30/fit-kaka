@@ -1,0 +1,1 @@
+{"root":["./src/index.ts","./src/config/db.ts","./src/config/gemini.ts","./src/routes/meals.ts","./src/routes/whatsapp.ts","./src/schema/meal.ts","./src/schema/user.ts","./src/services/ai.service.ts","./src/services/meal.service.ts","./src/utils/parseai.ts"],"version":"5.9.3"}
