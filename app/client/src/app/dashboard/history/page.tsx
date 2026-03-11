@@ -3,15 +3,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Flame, Activity, Calendar } from "lucide-react"
+import { fullMealHistory } from "@/data/dashboardData"
 
 export default function MealHistoryPage() {
-  const history = [
-    { id: 1, date: "2026-03-11", meal: "Paneer Butter Masala", calories: 650, protein: "24g" },
-    { id: 2, date: "2026-03-11", meal: "2 Rotis", calories: 240, protein: "6g" },
-    { id: 3, date: "2026-03-10", meal: "Chicken Rice Bowl", calories: 520, protein: "32g" },
-    { id: 4, date: "2026-03-10", meal: "Oatmeal with Berries", calories: 320, protein: "12g" },
-    { id: 5, date: "2026-03-09", meal: "Grilled Salmon & Veggies", calories: 450, protein: "40g" },
-  ]
 
   return (
     <div className="flex flex-col w-full animate-in fade-in duration-500">
@@ -46,7 +40,7 @@ export default function MealHistoryPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/40">
-                {history.map((item) => (
+                {fullMealHistory.map((item) => (
                   <tr key={item.id} className="bg-white dark:bg-zinc-950 hover:bg-neutral-50 dark:hover:bg-neutral-900/40 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2 text-muted-foreground">

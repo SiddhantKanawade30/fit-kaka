@@ -3,19 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
 import { Activity } from "lucide-react"
-
-const weeklyData = [
-  { day: "Week 1", calories: 15400 },
-  { day: "Week 2", calories: 14800 },
-  { day: "Week 3", calories: 15900 },
-  { day: "Week 4", calories: 15100 }
-]
-
-const macroData = [
-  { name: "Protein", value: 32, color: "#16a34a" },
-  { name: "Carbs", value: 48, color: "#22c55e" },
-  { name: "Fat", value: 20, color: "#86efac" },
-]
+import { analyticsWeeklyData, macroData } from "@/data/dashboardData"
 
 export default function AnalyticsPage() {
   return (
@@ -110,7 +98,7 @@ export default function AnalyticsPage() {
         </CardHeader>
         <CardContent className="h-[350px]">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={weeklyData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+            <LineChart data={analyticsWeeklyData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e5e5" />
               <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: '#888888', dy: 10 }} />
               <YAxis axisLine={false} tickLine={false} tick={{ fill: '#888888' }} dx={-10} />

@@ -1,7 +1,7 @@
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Activity, Droplets, Flame, Sparkles, Clock } from "lucide-react"
+import { Activity, Flame, Sparkles, Clock } from "lucide-react"
 import {
   LineChart,
   Line,
@@ -14,29 +14,7 @@ import {
   Pie,
   Cell
 } from "recharts"
-
-const weeklyData = [
-  { day: "Mon", calories: 2100 },
-  { day: "Tue", calories: 1950 },
-  { day: "Wed", calories: 2200 },
-  { day: "Thu", calories: 1800 },
-  { day: "Fri", calories: 2300 },
-  { day: "Sat", calories: 2500 },
-  { day: "Sun", calories: 2000 },
-]
-
-const macroData = [
-  { name: "Protein", value: 30, color: "#16a34a" },
-  { name: "Carbs", value: 45, color: "#22c55e" },
-  { name: "Fat", value: 25, color: "#86efac" },
-]
-
-const meals = [
-  { id: 1, type: "Breakfast", name: "Oatmeal with Berries", calories: 320, protein: "12g", time: "8:42 AM" },
-  { id: 2, type: "Lunch", name: "Chicken Rice Bowl", calories: 520, protein: "32g", time: "1:15 PM" },
-  { id: 3, type: "Snack", name: "Apple & Peanut Butter", calories: 220, protein: "6g", time: "4:05 PM" },
-  { id: 4, type: "Dinner", name: "Paneer Butter Masala with 2 Rotis", calories: 650, protein: "24g", time: "8:10 PM" },
-]
+import { dashboardStats, weeklyData, macroData, todayMeals } from "@/data/dashboardData"
 
 export default function DashboardPage() {
   return (
@@ -50,77 +28,25 @@ export default function DashboardPage() {
       <div className="flex flex-col gap-6">
       {/* Top Statistics Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="hover:shadow-md transition-shadow border-green-100 dark:border-green-900/50">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between space-y-0 pb-2">
-              <p className="text-sm font-medium leading-none">Calories Consumed</p>
-              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full">
-                <Flame className="size-4 text-green-600 dark:text-green-400" />
+        {dashboardStats.map((stat, idx) => (
+          <Card key={idx} className={`hover:shadow-md transition-shadow ${idx === 0 ? 'border-green-100 dark:border-green-900/50' : ''}`}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between space-y-0 pb-2">
+                <p className="text-sm font-medium leading-none">{stat.title}</p>
+                <div className={`p-2 rounded-full ${stat.bgClass}`}>
+                  <stat.icon className={`size-4 ${stat.color}`} />
+                </div>
               </div>
-            </div>
-            <div className="flex items-baseline space-x-2">
-              <h2 className="text-3xl font-bold tracking-tight">1650</h2>
-              <span className="text-sm text-muted-foreground">/ 2200 kcal</span>
-            </div>
-            <div className="mt-4 h-2 w-full bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
-              <div className="h-full bg-green-500 w-[75%] rounded-full" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-md transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between space-y-0 pb-2">
-              <p className="text-sm font-medium leading-none">Protein Intake</p>
-              <div className="p-2 bg-neutral-100 dark:bg-neutral-800 rounded-full">
-                <Activity className="size-4 text-foreground" />
+              <div className="flex items-baseline space-x-2">
+                <h2 className={`text-3xl font-bold tracking-tight ${idx === 3 ? 'text-green-600 dark:text-green-400' : ''}`}>{stat.value}</h2>
+                <span className="text-sm text-muted-foreground">/ {stat.target}</span>
               </div>
-            </div>
-            <div className="flex items-baseline space-x-2">
-              <h2 className="text-3xl font-bold tracking-tight">80g</h2>
-              <span className="text-sm text-muted-foreground">/ 120g</span>
-            </div>
-            <div className="mt-4 h-2 w-full bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
-              <div className="h-full bg-blue-500 w-[66%] rounded-full" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-md transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between space-y-0 pb-2">
-              <p className="text-sm font-medium leading-none">Water Intake</p>
-              <div className="p-2 bg-neutral-100 dark:bg-neutral-800 rounded-full">
-                <Droplets className="size-4 text-blue-500" />
+              <div className="mt-4 h-2 w-full bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
+                <div className={`h-full rounded-full ${stat.progressClass}`} style={{ width: `${stat.progressValue}%` }} />
               </div>
-            </div>
-            <div className="flex items-baseline space-x-2">
-              <h2 className="text-3xl font-bold tracking-tight">5</h2>
-              <span className="text-sm text-muted-foreground">/ 8 glasses</span>
-            </div>
-            <div className="mt-4 h-2 w-full bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
-              <div className="h-full bg-cyan-500 w-[62%] rounded-full" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-md transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between space-y-0 pb-2">
-              <p className="text-sm font-medium leading-none">Nutrition Score</p>
-              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full">
-                <Activity className="size-4 text-green-600 dark:text-green-400" />
-              </div>
-            </div>
-            <div className="flex items-baseline space-x-2">
-              <h2 className="text-3xl font-bold tracking-tight text-green-600 dark:text-green-400">78</h2>
-              <span className="text-sm text-muted-foreground">/ 100</span>
-            </div>
-            <div className="mt-4 h-2 w-full bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
-              <div className="h-full bg-green-500 w-[78%] rounded-full" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Main Charts Area */}
@@ -213,7 +139,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-border/50">
-              {meals.map((meal) => (
+              {todayMeals.map((meal) => (
                 <div key={meal.id} className="flex gap-4 p-4 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
                   <div className="flex flex-col flex-1 min-w-0">
                     <div className="flex justify-between items-start mb-0.5">
