@@ -1,9 +1,11 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
-import { analyzeFood, analyzeFoodFromImage, handleHealthScore, handleDailySummary, sendWeeklyReport, getOrCreateUser, updateUser, checkAndAlertGoals } from "../services/index.js";
+import { analyzeFood, analyzeFoodFromImage, handleHealthScore, handleDailySummary, sendWeeklyReport, DietService, getOrCreateUser, updateUser, UserDataService } from "../services/index.js";
 import { parseAIJson, downloadWhatsAppImage, sendWhatsAppMessage, sendMoreButton, sendMainOptions, logger } from "../utils/index.js";
 import { MealRepository } from "../database/index.js";
+import axios from "axios";
 import type { UserDocument } from "../schema/user.js";
+import { checkAndAlertGoals } from "../services/index.js";
 
 const router = Router();
 
@@ -169,6 +171,41 @@ router.post("/webhook/whatsapp", async (req: Request, res: Response) => {
 
         let aiResponse: string | null = null;
 
+        // Handle weight loss data collection responses
+        if (messageBody.match(/^\d+\.?\d*$/) || messageBody.toLowerCase().match(/^(1|2|yes|no|vegetarian|non-vegetarian)$/)) {
+            // Check if user is in weight loss data collection mode
+            const userDataStatus = await UserDataService.getUserDataStatus(from);
+            if (userDataStatus.nextQuestion) {
+                await UserDataService.handleWeightLossResponse(from, messageBody);
+                return res.sendStatus(200);
+            }
+        }
+
+        // Handle custom diet flow responses
+        if (messageBody.match(/^[1-4]$/) || messageBody.toLowerCase().match(/^(weight_loss|weight_gain|muscle_gain|maintain_weight)$/)) {
+            // This is a goal selection response
+            const result = await DietService.handleDietGoal(from, messageBody);
+            return res.sendStatus(200);
+        }
+
+        if (messageBody.toLowerCase().match(/^(1|2|yes|no|vegetarian|non-vegetarian)$/)) {
+            // This is a vegetarian status response
+            // We need to get the goal from the previous step - for now, we'll handle it simply
+            const vegetarian = messageBody.toLowerCase() === '1' || 
+                             messageBody.toLowerCase() === 'yes' || 
+                             messageBody.toLowerCase() === 'vegetarian';
+            
+            // For now, assume weight loss goal - in production, you'd track the user's state
+            await DietService.handleVegetarianStatus(from, messageBody, '1');
+            return res.sendStatus(200);
+        }
+
+        // Handle existing diet plan responses
+        if (messageBody.match(/^[1-3]$/) && buttonReply === "custom_diet") {
+            await DietService.handleExistingDiet(from, messageBody);
+            return res.sendStatus(200);
+        }
+
         if (messageBody.toLowerCase() === "weekly report") {
             await sendWeeklyReport(from);
             return res.sendStatus(200);
@@ -187,7 +224,7 @@ router.post("/webhook/whatsapp", async (req: Request, res: Response) => {
         }
 
         if (buttonReply === "custom_diet") {
-            await sendWhatsAppMessage(from, "What is your goal?\n\n1️⃣ Weight Loss\n2️⃣ Muscle Gain\n3️⃣ Maintain Weight\n4️⃣ Healthy Eating");
+            const result = await DietService.handleCustomDiet(from);
             return res.sendStatus(200);
         }
 
@@ -232,6 +269,18 @@ router.post("/webhook/whatsapp", async (req: Request, res: Response) => {
         } else {
             // Handle text messages
             logger.info("Processing text message");
+
+            // Check if this is a diet-related keyword first
+            const dietKeywords = ['weight loss', 'weight_gain', 'weight gain', 'muscle gain', 'muscle_gain', 'maintain weight', 'maintain_weight'];
+            const isDietKeyword = dietKeywords.some(keyword => 
+                messageBody.toLowerCase().trim() === keyword.toLowerCase()
+            );
+
+            if (isDietKeyword) {
+                // Handle as diet goal selection
+                const result = await DietService.handleDietGoal(from, messageBody);
+                return res.sendStatus(200);
+            }
 
             // Dynamic timeout based on message complexity
             const timeoutMs = isComplexMeal ? 30000 : 20000; // 30s for complex, 20s for simple

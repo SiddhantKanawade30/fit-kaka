@@ -7,12 +7,19 @@ export interface UserDocument extends mongoose.Document {
 	age?: number;
 	height?: number;
 	weight?: number;
+	targetWeight?: number;
+	isVegetarian?: boolean;
 	dailyProteinIntake?: number;
 	dailyCalories?: number;
 	dailyCarbs?: number;
 	dailyFats?: number;
 	goalProfileCompleted: boolean;
 	goalSetupStep: GoalSetupStep | null;
+	ageUpdatedAt?: Date;
+	heightUpdatedAt?: Date;
+	weightUpdatedAt?: Date;
+	targetWeightUpdatedAt?: Date;
+	vegetarianUpdatedAt?: Date;
 }
 
 const userSchema = new mongoose.Schema<UserDocument>(
@@ -21,6 +28,8 @@ const userSchema = new mongoose.Schema<UserDocument>(
 		age: { type: Number },
 		height: { type: Number },
 		weight: { type: Number },
+		targetWeight: { type: Number },
+		isVegetarian: { type: Boolean },
 		dailyProteinIntake: { type: Number },
 		dailyCalories: { type: Number },
 		dailyCarbs: { type: Number },
@@ -31,6 +40,11 @@ const userSchema = new mongoose.Schema<UserDocument>(
 			enum: ["age", "height", "weight", "macros", null],
 			default: null,
 		},
+		ageUpdatedAt: { type: Date },
+		heightUpdatedAt: { type: Date },
+		weightUpdatedAt: { type: Date },
+		targetWeightUpdatedAt: { type: Date },
+		vegetarianUpdatedAt: { type: Date },
 	},
 	{
 		timestamps: true,
