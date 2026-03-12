@@ -134,24 +134,46 @@ router.get("/webhook/whatsapp", (req, res) => {
     }
 });
 
+// In-memory set to deduplicate webhook retries.
+// Meta retries delivery if it doesn't get HTTP 200 within ~5 s.
+const processedMessageIds = new Set<string>();
+
 /**
  * Handle incoming WhatsApp messages
  */
 router.post("/webhook/whatsapp", async (req: Request, res: Response) => {
-    const body = req.body;
-    const message = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+    // ⚡ Acknowledge immediately so Meta never retries this delivery.
+    res.sendStatus(200);
 
-    // Debug logging to understand the structure
+    const body = req.body;
+    const value = req.body.entry?.[0]?.changes?.[0]?.value;
+    const message = value?.messages?.[0];
+
     logger.debug("Full webhook body:", JSON.stringify(body, null, 2));
-    
+
+    // Status callbacks (delivered/read receipts) carry no user message — skip silently.
     if (!message) {
-        logger.info("No message found in webhook");
-        return res.sendStatus(200);
+        if (value?.statuses?.length) {
+            logger.debug("Webhook status event, skipping");
+        } else {
+            logger.info("No message found in webhook");
+        }
+        return;
     }
 
     const from = message.from;
     const messageBody = message.text?.body || "";
     const inboundMessageId: string | undefined = message.id;
+
+    // Dedup: ignore retries for messages already being processed.
+    if (inboundMessageId) {
+        if (processedMessageIds.has(inboundMessageId)) {
+            logger.info(`Duplicate webhook delivery for message ${inboundMessageId}, ignoring`);
+            return;
+        }
+        processedMessageIds.add(inboundMessageId);
+        setTimeout(() => processedMessageIds.delete(inboundMessageId), 5 * 60 * 1000);
+    }
     
     // Handle both button reply structures
     const buttonReply = message?.interactive?.button_reply?.id || 
@@ -182,13 +204,13 @@ Start tracking your nutrition by uploading a photo or text of your food! 📸�
 I'll analyze your meals and provide detailed nutrition info instantly! 🚀`;
             
             await sendWhatsAppMessage(from, greetingMessage);
-            return res.sendStatus(200);
+            return;
         }
 
         // Resume onboarding if already active
         if (user.goalSetupStep) {
             await handleGoalSetup(user, messageBody);
-            return res.sendStatus(200);
+            return;
         }
 
         let aiResponse: string | null = null;
@@ -199,7 +221,7 @@ I'll analyze your meals and provide detailed nutrition info instantly! 🚀`;
             const userDataStatus = await UserDataService.getUserDataStatus(from);
             if (userDataStatus.nextQuestion) {
                 await UserDataService.handleWeightLossResponse(from, messageBody);
-                return res.sendStatus(200);
+                return;
             }
         }
 
@@ -208,7 +230,7 @@ I'll analyze your meals and provide detailed nutrition info instantly! 🚀`;
             buttonReply === "muscle_gain" || buttonReply === "maintain_weight") {
             // Handle diet goal selection from interactive list
             const result = await DietService.handleDietGoal(from, buttonReply);
-            return res.sendStatus(200);
+            return;
         }
 
         if (buttonReply === "view_diet" || buttonReply === "update_diet" || buttonReply === "main_menu") {
@@ -216,7 +238,7 @@ I'll analyze your meals and provide detailed nutrition info instantly! 🚀`;
             const choice = buttonReply === "view_diet" ? "1" : 
                          buttonReply === "update_diet" ? "2" : "3";
             const result = await DietService.handleExistingDiet(from, choice);
-            return res.sendStatus(200);
+            return;
         }
 
         // Handle vegetarian button responses
@@ -227,7 +249,7 @@ I'll analyze your meals and provide detailed nutrition info instantly! 🚀`;
             const goal = 'weight_loss';
             const vegetarianResponse = buttonReply === "vegetarian_yes" ? "1" : "2";
             await DietService.handleVegetarianStatus(from, vegetarianResponse, goal);
-            return res.sendStatus(200);
+            return;
         }
 
         if (messageBody.toLowerCase().match(/^(1|2|yes|no|vegetarian|non-vegetarian)$/)) {
@@ -242,35 +264,35 @@ I'll analyze your meals and provide detailed nutrition info instantly! 🚀`;
             
             // For now, assume weight loss goal - in production, you'd track the user's state
             await DietService.handleVegetarianStatus(from, messageBody, '1');
-            return res.sendStatus(200);
+            return;
         }
 
         // Handle existing diet plan responses
         if (messageBody.match(/^[1-3]$/) && buttonReply === "custom_diet") {
             await DietService.handleExistingDiet(from, messageBody);
-            return res.sendStatus(200);
+            return;
         }
 
         if (messageBody.toLowerCase() === "weekly report") {
             await sendWeeklyReport(from);
-            return res.sendStatus(200);
+            return;
         }
 
         if (buttonReply === "more_options") {
             logger.info("Sending main options");
             await sendMainOptions(from);
-            return res.sendStatus(200);
+            return;
         }
 
         if (buttonReply === "health_score") {
             logger.info("Handling health score");
-            await handleHealthScore(from);   
-            return res.sendStatus(200);
+            await handleHealthScore(from);
+            return;
         }
 
         if (buttonReply === "custom_diet") {
             const result = await DietService.handleCustomDiet(from);
-            return res.sendStatus(200);
+            return;
         }
 
         if (buttonReply === "set_goal") {
@@ -280,13 +302,13 @@ I'll analyze your meals and provide detailed nutrition info instantly! 🚀`;
             } else {
                 await sendWhatsAppMessage(from, "Your goals are already set.");
             }
-            return res.sendStatus(200);
+            return;
         }
 
         if (buttonReply === "daily_summary") {
             logger.info("Handling daily summary");
             await handleDailySummary(from);
-            return res.sendStatus(200);
+            return;
         }
 
         // Handle image messages
@@ -339,7 +361,7 @@ I'll analyze your meals and provide detailed nutrition info instantly! 🚀`;
             if (isDietKeyword) {
                 // Handle as diet goal selection
                 const result = await DietService.handleDietGoal(from, messageBody);
-                return res.sendStatus(200);
+                return;
             }
 
             // Dynamic timeout based on message complexity
@@ -409,7 +431,6 @@ I'll analyze your meals and provide detailed nutrition info instantly! 🚀`;
             `🧈 *Fats:* ${nutrition.fats}g`;
 
         await sendMoreButton(from, reply);
-        res.sendStatus(200);
 
     } catch (error) {
         logger.error("WhatsApp webhook error", error);
@@ -424,7 +445,6 @@ I'll analyze your meals and provide detailed nutrition info instantly! 🚀`;
         }
 
         await sendWhatsAppMessage(from, errorMessage);
-        res.sendStatus(200);
     }
 });
 
