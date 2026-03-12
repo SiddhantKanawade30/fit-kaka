@@ -23,27 +23,48 @@ export function calculateHealthScore(proteins: number, carbs: number, fats: numb
 
 export async function handleHealthScore(user: string) {
   try {
-    const lastMeal = await MealRepository.getLastMeal(user);
+    const todayMeals = await MealRepository.getTodayMeals(user);
     
-    if (!lastMeal) {
-      await sendWhatsAppMessage(user, "No meals found to analyze! 🍽️");
+    if (!todayMeals || todayMeals.length === 0) {
+      await sendWhatsAppMessage(user, "No meals found for today! 🍽️\n\nStart tracking your meals to get a health score!");
       return;
     }
 
+    // Calculate totals for all meals today
+    const totalNutrition = todayMeals.reduce((totals, meal) => ({
+      calories: totals.calories + meal.calories,
+      proteins: totals.proteins + meal.proteins,
+      carbs: totals.carbs + meal.carbs,
+      fats: totals.fats + meal.fats,
+      foods: [...totals.foods, meal.food]
+    }), {
+      calories: 0,
+      proteins: 0,
+      carbs: 0,
+      fats: 0,
+      foods: [] as string[]
+    });
+
     const score = calculateHealthScore(
-      lastMeal.proteins,
-      lastMeal.carbs,
-      lastMeal.fats,
-      lastMeal.calories
+      totalNutrition.proteins,
+      totalNutrition.carbs,
+      totalNutrition.fats,
+      totalNutrition.calories
     );
 
-    const message = `📊 *Health Score for ${lastMeal.food}*\n\n` +
+    const mealCount = todayMeals.length;
+    const foodsList = totalNutrition.foods.slice(0, 3).join(', ');
+    const moreFoods = totalNutrition.foods.length > 3 ? ` +${totalNutrition.foods.length - 3} more` : '';
+
+    const message = `📊 *Today's Health Score*\n\n` +
+      `🍽️ Meals analyzed: ${mealCount}\n` +
+      `🍴 Foods: ${foodsList}${moreFoods}\n\n` +
       `⭐ Score: ${score}/10\n` +
-      `🔥 Calories: ${lastMeal.calories} kcal\n` +
-      `🥩 Proteins: ${lastMeal.proteins}g\n` +
-      `🍞 Carbs: ${lastMeal.carbs}g\n` +
-      `🧈 Fats: ${lastMeal.fats}g\n\n` +
-      `${score >= 8 ? '🎉 Excellent choice!' : score >= 6 ? '👍 Good meal!' : '💪 Could be better!'}`;
+      `🔥 Total Calories: ${totalNutrition.calories} kcal\n` +
+      `🥩 Total Proteins: ${totalNutrition.proteins}g\n` +
+      `🍞 Total Carbs: ${totalNutrition.carbs}g\n` +
+      `🧈 Total Fats: ${totalNutrition.fats}g\n\n` +
+      `${score >= 8 ? '🎉 Excellent nutrition today!' : score >= 6 ? '👍 Good day overall!' : '💪 Room for improvement!'}`;
 
     await sendWhatsAppMessage(user, message);
   } catch (error) {

@@ -31,27 +31,17 @@ export async function sendMainOptions(to: string) {
                                 rows: [
                                     {
                                         id: "health_score",
-                                        title: " Health Score",
-                                        description: "Get health rating for your last meal"
+                                        title: "📊 Health Score",
+                                        description: "Get health rating for today's meals"
                                     },
                                     {
-                                        id: "daily_summary",
-                                        title: " Daily Summary",
-                                        description: "View today's nutrition totals"
-                                    }
-                                ]
-                            },
-                            {
-                                title: "Goals & Planning",
-                                rows: [
-                                    {
                                         id: "custom_diet",
-                                        title: " Customize Diet",
+                                        title: "🎯 Customize Diet",
                                         description: "Get personalized diet recommendations"
                                     },
                                     {
                                         id: "set_goal",
-                                        title: " Set Goals",
+                                        title: "🏆 Set Goals",
                                         description: "Set your fitness and nutrition goals"
                                     }
                                 ]

@@ -197,11 +197,10 @@ router.post("/webhook/whatsapp", async (req: Request, res: Response) => {
         );
 
         if (isGreeting) {
-            const greetingMessage = `👋 *Hi! This is FIT KAKA!* 🥗
+            const greetingMessage = `*Hi This is FIT KAKA!* 🥗
 
-Start tracking your nutrition by uploading a photo or text of your food! 📸📝
-
-I'll analyze your meals and provide detailed nutrition info instantly! 🚀`;
+Start tracking your nutrition by uploading a photo or text of your food!
+I'll analyze your meals and provide detailed nutrition info instantly!`;
             
             await sendWhatsAppMessage(from, greetingMessage);
             return;
@@ -302,12 +301,6 @@ I'll analyze your meals and provide detailed nutrition info instantly! 🚀`;
             } else {
                 await sendWhatsAppMessage(from, "Your goals are already set.");
             }
-            return;
-        }
-
-        if (buttonReply === "daily_summary") {
-            logger.info("Handling daily summary");
-            await handleDailySummary(from);
             return;
         }
 
