@@ -1,11 +1,35 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Flame, Activity, Calendar } from "lucide-react"
 import { fullMealHistory } from "@/data/dashboardData"
+import { fetchMealHistory, getStoredPhone } from "@/lib/api"
+
+type HistoryRow = (typeof fullMealHistory)[number]
 
 export default function MealHistoryPage() {
+  const [mealHistory, setMealHistory] = useState<HistoryRow[]>(fullMealHistory)
+
+  useEffect(() => {
+    const phone = getStoredPhone()
+    if (!phone) return
+    fetchMealHistory(phone)
+      .then((data) => {
+        if (data.length === 0) return
+        setMealHistory(
+          data.map((item, idx) => ({
+            id: idx + 1,
+            date: item.date.split("T")[0],
+            meal: item.mealName,
+            calories: Math.round(item.calories),
+            protein: `${Math.round(item.protein)}g`,
+          }))
+        )
+      })
+      .catch(() => {})
+  }, [])
 
   return (
     <div className="flex flex-col w-full animate-in fade-in duration-500">
@@ -40,7 +64,7 @@ export default function MealHistoryPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/40">
-                {fullMealHistory.map((item) => (
+                {mealHistory.map((item) => (
                   <tr key={item.id} className="bg-white dark:bg-zinc-950 hover:bg-neutral-50 dark:hover:bg-neutral-900/40 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2 text-muted-foreground">
