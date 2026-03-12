@@ -267,7 +267,10 @@ JSON schema:
   "totalDailyFats": number
 }`;
 
-      const aiResponse = await generateContent(prompt);
+      const aiResponse = await generateContent(prompt, {
+        requestType: "diet_generation",
+        inputChars: prompt.length,
+      });
       return this.parseAndValidateDietPlan(aiResponse);
     } catch (error) {
       console.error("Error generating diet plan:", error);

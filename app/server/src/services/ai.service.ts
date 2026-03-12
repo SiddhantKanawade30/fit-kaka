@@ -29,7 +29,10 @@ Return ONLY valid JSON with no markdown or extra text:
 export const analyzeFood = async (text: string): Promise<string | null> => {
     try {
         const prompt = `${NUTRITION_PROMPT}\nAnalyze: "${text}"`;
-        return await generateContent(prompt);
+        return await generateContent(prompt, {
+            requestType: "food_text_analysis",
+            inputChars: text.length,
+        });
     } catch (error) {
         console.error("AI Service - Text Analysis Error:", error);
         return null;
@@ -44,7 +47,12 @@ export const analyzeFoodFromImage = async (
     try {
         const weightContext = weight ? `The weight/quantity is: ${weight}.` : "";
         const prompt = `${IMAGE_PROMPT_BASE}\n${weightContext}`;
-        return await generateContentWithImage(prompt, imageBuffer, mimeType);
+        return await generateContentWithImage(prompt, imageBuffer, mimeType, {
+            requestType: "food_image_analysis",
+            inputChars: weightContext.length,
+            imageBytes: imageBuffer.length,
+            mimeType,
+        });
     } catch (error) {
         console.error("AI Service - Image Analysis Error (base64):", error);
         return null;
@@ -58,7 +66,10 @@ export const analyzeFoodFromImageUrl = async (
     try {
         const weightContext = weight ? `The weight/quantity is: ${weight}.` : "";
         const prompt = `${IMAGE_PROMPT_BASE}\n${weightContext}`;
-        return await generateContentWithImageUrl(prompt, imageUrl);
+        return await generateContentWithImageUrl(prompt, imageUrl, {
+            requestType: "food_image_url_analysis",
+            inputChars: weightContext.length,
+        });
     } catch (error) {
         console.error("AI Service - Image Analysis Error (URL):", error);
         return null;
