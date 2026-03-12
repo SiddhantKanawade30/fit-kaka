@@ -16,6 +16,7 @@ export default function FeaturesPage() {
   const [currentFoodIndex, setCurrentFoodIndex] = useState(0)
   const [isDeleting, setIsDeleting] = useState(false)
   const [charIndex, setCharIndex] = useState(0)
+  const [currentCardIndex, setCurrentCardIndex] = useState(0)
 
   useEffect(() => {
     const currentFood = foodExamples[currentFoodIndex]
@@ -44,25 +45,39 @@ export default function FeaturesPage() {
 
   const features = [
     {
-      title: "Chat with your calls",
-      description: "It makes no sense but we have it here. Use it the way you want it."
+      title: "Chat Nutrition Tracking",
+      description: "Tell FIT KAKA what you ate in plain text and it instantly analyzes calories, macros, and nutritional value for you."
     },
     {
-      title: "Easy payments",
+      title: "Photo Meal Analysis",
       description:
-        "We accept all kinds of cards. We make sure you get money whichever way possible.",
-      image: "/images/payment-preview.png"
+        "Just snap a picture of your food and FIT KAKA will detect the items and estimate calories and nutrients automatically.",
+      image: "/feature2.png"
     },
     {
-      title: "Invite team members",
+      title: "Smart Nutrition Dashboard",
       description:
-        "With our state of the art support of team members, invite your team into the software.",
+        "Track daily calories, macro breakdown, meal history, and progress with a simple and organized interface.",
       image: "/images/team-preview.png"
     }
   ]
 
+  const cards = [
+    "/fc1.jpeg",
+    "/fc2.jpeg",
+    "/fc3.jpeg"
+  ]
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentCardIndex((prev) => (prev + 1) % cards.length)
+    }, 4000) // Slower interval for smoother transitions
+
+    return () => clearInterval(interval)
+  }, [cards.length])
+
   return (
-    <section className="bg-white py-24 px-6">
+    <section id="features" className="bg-white py-24 px-6">
       <div className="max-w-6xl mx-auto text-center">
 
         {/* Heading */}
@@ -136,24 +151,48 @@ export default function FeaturesPage() {
 
                     </div>
                   </div>
+                ) : index === 2 ? (
+                  /* THIRD CARD – STACKED CARD ANIMATION */
+                  <div className="h-[240px] w-full overflow-hidden relative mb-6">
+                    <div className="absolute inset-0">
+                      {cards.map((cardPath, cardIndex) => {
+                        return (
+                          <div
+                            key={cardIndex}
+                            className="absolute inset-0 rounded-xl border-2 border-gray-300 shadow-md overflow-hidden transition-opacity duration-1000 ease-in-out"
+                            style={{
+                              opacity: cardIndex === currentCardIndex ? 1 : 0,
+                              zIndex: cardIndex === currentCardIndex ? 1 : 0,
+                              transition: 'opacity 1s ease-in-out'
+                            }}
+                          >
+                            <Image
+                              src={cardPath}
+                              alt={`Card ${cardIndex + 1}`}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
                 ) : (
 
                   /* OTHER CARDS */
                   <div className="bg-white border border-gray-200 rounded-xl p-4 h-[240px] flex items-center justify-center mb-6">
-
-                    {/* <Image
+                    <Image
                       src={feature.image}
-                      alt={feature.title}
+                      alt="Meal analysis preview"
                       width={400}
                       height={260}
-                      className="w-full h-full object-contain"
-                    /> */}
-
+                      className="w-full h-full object-contain rounded-xl"
+                    />
                   </div>
                 )}
 
                 {/* TEXT */}
-                <div className="text-left flex-1">
+                <div className="mt-0 text-left flex-1">
 
                   <h3 className="text-lg font-semibold text-gray-900">
                     {feature.title}

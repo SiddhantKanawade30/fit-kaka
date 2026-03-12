@@ -3,7 +3,7 @@ export default function Hero() {
     <div className="w-full bg-white/50">
       <section className="relative w-full mx-auto overflow-hidden bg-white/50 pb-0 pt-20 rounded-b-[3rem]">
         {/* Background Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white/100 via-green-50/50 to-green-400/50 pointer-events-none z-0" />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/100 via-green-50/50 to-green-700/50 pointer-events-none z-0" />
 
         {/* Concentric Rings (Decorative) */}
         <div className="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border-2 border-white/60 rounded-full pointer-events-none z-0" />

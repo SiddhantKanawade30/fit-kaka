@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -35,9 +36,7 @@ export default function Navbar() {
       >
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#075e54] to-[#25d366] flex items-center justify-center text-white font-bold shadow-sm shadow-[#25d366]/30 group-hover:scale-105 transition-transform">
-            FK
-          </div>
+          <Image src="/logo.png" alt="FIT KAKA Logo" className="w-8 h-8 pb-2 object-contain group-hover:scale-105 transition-transform" width={32} height={32} priority />
           <span className="font-bold text-lg tracking-tight text-neutral-900">
             FIT KAKA
           </span>
