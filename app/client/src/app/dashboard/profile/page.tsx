@@ -5,48 +5,86 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { healthProfileFields, calculatedTargets } from "@/data/dashboardData"
-import { fetchBasicProfile, getStoredPhone } from "@/lib/api"
+import { fetchBasicProfile, getStoredPhone, updateBasicProfile } from "@/lib/api"
+
+type ProfileForm = {
+  age: string
+  height: string
+  weight: string
+}
+
+function buildTargets(age: number, height: number, weight: number) {
+  const heightM = height / 100
+  const bmi = weight / (heightM * heightM)
+  const bmr = 88.36 + 13.4 * weight + 4.8 * height - 5.7 * age
+  const calories = Math.round(bmr * 1.55)
+  const protein = Math.round(weight * 1.6)
+  const bmiCategory =
+    bmi < 18.5 ? "Underweight" : bmi < 25 ? "Normal" : bmi < 30 ? "Overweight" : "Obese"
+
+  return [
+    { title: "BMI", value: bmi.toFixed(1), unit: "", badge: bmiCategory },
+    { title: "Recommended Daily Calories", value: calories.toLocaleString(), unit: "kcal/day" },
+    { title: "Recommended Protein", value: String(protein), unit: "g/day", subtext: 'Based on target "Build Muscle"' },
+  ]
+}
 
 export default function ProfilePage() {
-  const [profileKey, setProfileKey] = useState("default")
-  const [fields, setFields] = useState(healthProfileFields)
+  const [form, setForm] = useState<ProfileForm>({ age: "", height: "", weight: "" })
   const [targets, setTargets] = useState(calculatedTargets)
+  const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
     const phone = getStoredPhone()
     if (!phone) return
+
     fetchBasicProfile(phone)
       .then((profile) => {
-        setFields(
-          healthProfileFields.map((f) => {
-            if (f.id === "age" && profile.age != null)
-              return { ...f, defaultValue: String(profile.age) }
-            if (f.id === "height" && profile.height != null)
-              return { ...f, defaultValue: String(profile.height) }
-            if (f.id === "weight" && profile.weight != null)
-              return { ...f, defaultValue: String(profile.weight) }
-            return f
-          }) as typeof healthProfileFields
-        )
-        if (profile.weight != null && profile.height != null) {
-          const heightM = profile.height / 100
-          const bmi = profile.weight / (heightM * heightM)
-          const age = profile.age ?? 28
-          const bmr = 88.36 + 13.4 * profile.weight + 4.8 * profile.height - 5.7 * age
-          const calories = Math.round(bmr * 1.55)
-          const protein = Math.round(profile.weight * 1.6)
-          const bmiCategory =
-            bmi < 18.5 ? "Underweight" : bmi < 25 ? "Normal" : bmi < 30 ? "Overweight" : "Obese"
-          setTargets([
-            { title: "BMI", value: bmi.toFixed(1), unit: "", badge: bmiCategory },
-            { title: "Recommended Daily Calories", value: calories.toLocaleString(), unit: "kcal/day" },
-            { title: "Recommended Protein", value: String(protein), unit: "g/day", subtext: 'Based on target "Build Muscle"' },
-          ])
-        }
-        setProfileKey("loaded")
+        const age = profile.age ?? 28
+        const height = profile.height ?? 175
+        const weight = profile.weight ?? 72
+
+        setForm({
+          age: String(age),
+          height: String(height),
+          weight: String(weight),
+        })
+        setTargets(buildTargets(age, height, weight))
       })
       .catch(() => {})
   }, [])
+
+  async function handleSaveProfile() {
+    const phone = getStoredPhone()
+    if (!phone) return
+
+    const age = Number(form.age)
+    const height = Number(form.height)
+    const weight = Number(form.weight)
+
+    if (!Number.isFinite(age) || !Number.isFinite(height) || !Number.isFinite(weight)) {
+      return
+    }
+
+    setIsSaving(true)
+    try {
+      const updated = await updateBasicProfile(phone, { age, height, weight })
+      const updatedAge = updated.age ?? age
+      const updatedHeight = updated.height ?? height
+      const updatedWeight = updated.weight ?? weight
+
+      setForm({
+        age: String(updatedAge),
+        height: String(updatedHeight),
+        weight: String(updatedWeight),
+      })
+      setTargets(buildTargets(updatedAge, updatedHeight, updatedWeight))
+    } catch {
+      // no-op
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   return (
     <div className="flex flex-col w-full animate-in fade-in duration-500">
@@ -59,31 +97,38 @@ export default function ProfilePage() {
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Input Details */}
-        <Card className="hover:shadow-md transition-shadow" key={profileKey}>
+        <Card className="hover:shadow-md transition-shadow">
           <CardHeader>
             <CardTitle>Personal Details</CardTitle>
             <CardDescription>Update your metrics for accurate AI calculations.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              {fields.map((field) => (
-                <div key={field.id} className={`space-y-2 ${field.colSpan ? `col-span-${field.colSpan}` : ''}`}>
+              {healthProfileFields.map((field) => (
+                <div key={field.id} className="space-y-2">
                   <label className="text-sm font-medium">{field.label}</label>
-                  {field.type === 'input' ? (
-                    <Input defaultValue={field.defaultValue} type={field.inputType} />
-                  ) : (
-                    <select className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                      {field.options?.map((opt, i) => (
-                        <option key={i} value={opt.value} selected={opt.selected}>{opt.label}</option>
-                      ))}
-                    </select>
-                  )}
+                  <Input
+                    value={form[field.id as keyof ProfileForm] ?? ""}
+                    type={field.inputType}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        [field.id]: e.target.value,
+                      }))
+                    }
+                  />
                 </div>
               ))}
             </div>
           </CardContent>
           <CardFooter>
-            <Button className="w-full bg-green-600 hover:bg-green-700 text-white">Save Profile</Button>
+            <Button
+              className="w-full bg-green-600 hover:bg-green-700 text-white"
+              onClick={handleSaveProfile}
+              disabled={isSaving}
+            >
+              {isSaving ? "Saving..." : "Save Profile"}
+            </Button>
           </CardFooter>
         </Card>
 

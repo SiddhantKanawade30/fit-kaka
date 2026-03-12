@@ -55,6 +55,8 @@ router.get("/api/meals/:phone", async (req: Request, res: Response) => {
 			mealName: meal.food,
 			calories: meal.calories,
 			protein: meal.proteins,
+			carbs: meal.carbs,
+			fats: meal.fats,
 		}));
 
 		return res.status(200).json({
@@ -112,6 +114,92 @@ router.get("/api/users/:phone/basic", async (req: Request, res: Response) => {
 		return res.status(500).json({
 			success: false,
 			message: "Failed to fetch user profile",
+		});
+	}
+});
+
+router.put("/api/users/:phone/basic", async (req: Request, res: Response) => {
+	try {
+		const phone = req.params.phone;
+
+		if (!phone || typeof phone !== "string") {
+			return res.status(400).json({
+				success: false,
+				message: "Phone parameter is required",
+			});
+		}
+
+		const { age, height, weight } = req.body ?? {};
+
+		if (age == null || height == null || weight == null) {
+			return res.status(400).json({
+				success: false,
+				message: "age, height, and weight are required",
+			});
+		}
+
+		const parsedAge = Number(age);
+		const parsedHeight = Number(height);
+		const parsedWeight = Number(weight);
+
+		if (!Number.isFinite(parsedAge) || parsedAge < 10 || parsedAge > 120) {
+			return res.status(400).json({ success: false, message: "Age must be between 10 and 120" });
+		}
+
+		if (!Number.isFinite(parsedHeight) || parsedHeight < 90 || parsedHeight > 250) {
+			return res.status(400).json({ success: false, message: "Height must be between 90 and 250 cm" });
+		}
+
+		if (!Number.isFinite(parsedWeight) || parsedWeight < 20 || parsedWeight > 400) {
+			return res.status(400).json({ success: false, message: "Weight must be between 20 and 400 kg" });
+		}
+
+		const candidates = getPhoneCandidates(phone);
+		let targetPhone: string | null = null;
+
+		for (const candidate of candidates) {
+			const existing = await UserRepository.findByPhone(candidate);
+			if (existing) {
+				targetPhone = existing.phone;
+				break;
+			}
+		}
+
+		if (!targetPhone) {
+			targetPhone = candidates[0] ?? phone;
+		}
+
+		const now = new Date();
+		const updated = await UserRepository.updateUser(targetPhone, {
+			age: parsedAge,
+			height: parsedHeight,
+			weight: parsedWeight,
+			ageUpdatedAt: now,
+			heightUpdatedAt: now,
+			weightUpdatedAt: now,
+			goalProfileCompleted: true,
+		});
+
+		if (!updated) {
+			return res.status(500).json({
+				success: false,
+				message: "Failed to update user profile",
+			});
+		}
+
+		return res.status(200).json({
+			success: true,
+			data: {
+				age: updated.age ?? null,
+				height: updated.height ?? null,
+				weight: updated.weight ?? null,
+			},
+		});
+	} catch (error) {
+		console.error("Error updating user profile:", error);
+		return res.status(500).json({
+			success: false,
+			message: "Failed to update user profile",
 		});
 	}
 });

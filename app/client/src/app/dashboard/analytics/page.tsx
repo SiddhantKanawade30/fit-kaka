@@ -1,11 +1,84 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
 import { Activity } from "lucide-react"
 import { analyticsWeeklyData, macroData } from "@/data/dashboardData"
+import { fetchMealHistory, getStoredPhone } from "@/lib/api"
 
 export default function AnalyticsPage() {
+  const [analyticsWeekly, setAnalyticsWeekly] = useState(analyticsWeeklyData)
+  const [macros, setMacros] = useState(macroData.map((m) => ({ ...m, value: 0, amount: 0 })))
+
+  useEffect(() => {
+    const phone = getStoredPhone()
+    if (!phone) return
+
+    fetchMealHistory(phone)
+      .then((data) => {
+        if (data.length === 0) return
+
+        const toLocalDateKey = (input: string | Date) =>
+          new Date(input).toLocaleDateString("en-CA")
+
+        const now = new Date()
+        const last30Start = new Date(now)
+        last30Start.setDate(now.getDate() - 29)
+
+        const last30Meals = data.filter((m) => {
+          const date = new Date(m.date)
+          return date >= last30Start && date <= now
+        })
+
+        const macroTotals = last30Meals.reduce(
+          (acc, m) => {
+            acc.protein += Number(m.protein) || 0
+            acc.carbs += Number(m.carbs) || 0
+            acc.fats += Number(m.fats) || 0
+            return acc
+          },
+          { protein: 0, carbs: 0, fats: 0 }
+        )
+
+        const proteinCalories = macroTotals.protein * 4
+        const carbsCalories = macroTotals.carbs * 4
+        const fatsCalories = macroTotals.fats * 9
+        const totalMacroCalories = proteinCalories + carbsCalories + fatsCalories
+
+        if (totalMacroCalories > 0) {
+          const proteinPct = Math.round((proteinCalories / totalMacroCalories) * 100)
+          const carbsPct = Math.round((carbsCalories / totalMacroCalories) * 100)
+          const fatsPct = Math.max(0, 100 - proteinPct - carbsPct)
+
+          setMacros([
+            { name: "Protein", value: proteinPct, color: "#16a34a", amount: Math.round(macroTotals.protein) },
+            { name: "Carbs", value: carbsPct, color: "#22c55e", amount: Math.round(macroTotals.carbs) },
+            { name: "Fat", value: fatsPct, color: "#86efac", amount: Math.round(macroTotals.fats) },
+          ])
+        }
+
+        // Last 4 weeks totals (Week 1 oldest -> Week 4 latest)
+        const weekTotals = [0, 0, 0, 0]
+        data.forEach((m) => {
+          const mealDate = new Date(m.date)
+          const diffDays = Math.floor((now.getTime() - mealDate.getTime()) / (1000 * 60 * 60 * 24))
+          if (diffDays >= 0 && diffDays < 28) {
+            const weekIndex = 3 - Math.floor(diffDays / 7)
+            weekTotals[weekIndex] += Number(m.calories) || 0
+          }
+        })
+
+        setAnalyticsWeekly([
+          { day: "Week 1", calories: Math.round(weekTotals[0]) },
+          { day: "Week 2", calories: Math.round(weekTotals[1]) },
+          { day: "Week 3", calories: Math.round(weekTotals[2]) },
+          { day: "Week 4", calories: Math.round(weekTotals[3]) },
+        ])
+      })
+      .catch(() => {})
+  }, [])
+
   return (
     <div className="flex flex-col w-full animate-in fade-in duration-500">
       <div className="flex flex-col gap-1.5 mb-6">
@@ -52,7 +125,7 @@ export default function AnalyticsPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={macroData}
+                    data={macros}
                     cx="50%"
                     cy="50%"
                     innerRadius={70}
@@ -61,17 +134,20 @@ export default function AnalyticsPage() {
                     dataKey="value"
                     stroke="none"
                   >
-                    {macroData.map((entry, index) => (
+                    {macros.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                  <Tooltip
+                    formatter={(_value, _name, item) => [String(item?.payload?.amount ?? 0), item?.payload?.name ?? "Macro"]}
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
             
             <div className="w-full lg:w-1/2 flex flex-col gap-4 px-4">
-              {macroData.map((macro, idx) => (
+              {macros.map((macro, idx) => (
                 <div key={idx} className="flex flex-col gap-1">
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
@@ -98,7 +174,7 @@ export default function AnalyticsPage() {
         </CardHeader>
         <CardContent className="h-[350px]">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={analyticsWeeklyData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+            <LineChart data={analyticsWeekly} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e5e5" />
               <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: '#888888', dy: 10 }} />
               <YAxis axisLine={false} tickLine={false} tick={{ fill: '#888888' }} dx={-10} />

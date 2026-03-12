@@ -3,6 +3,8 @@ export type MealHistoryItem = {
 	mealName: string;
 	calories: number;
 	protein: number;
+	carbs: number;
+	fats: number;
 };
 
 export type BasicProfile = {
@@ -22,6 +24,12 @@ type ProfileApiResponse = {
 	success: boolean;
 	data?: BasicProfile;
 	message?: string;
+};
+
+type UpdateProfileInput = {
+	age: number;
+	height: number;
+	weight: number;
 };
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
@@ -81,6 +89,29 @@ export async function fetchBasicProfile(phone: string) {
 	for (const candidate of buildPhoneCandidates(phone)) {
 		const response = await fetch(`${API_BASE_URL}/api/users/${candidate}/basic`, {
 			cache: "no-store",
+		});
+		const payload = (await response.json()) as ProfileApiResponse;
+
+		if (response.ok && payload.success && payload.data) {
+			return payload.data;
+		}
+
+		lastError = payload.message ?? lastError;
+	}
+
+	throw new Error(lastError);
+}
+
+export async function updateBasicProfile(phone: string, input: UpdateProfileInput) {
+	let lastError = "Failed to update profile";
+
+	for (const candidate of buildPhoneCandidates(phone)) {
+		const response = await fetch(`${API_BASE_URL}/api/users/${candidate}/basic`, {
+			method: "PUT",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify(input),
 		});
 		const payload = (await response.json()) as ProfileApiResponse;
 

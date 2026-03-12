@@ -22,6 +22,7 @@ export default function DashboardPage() {
 	const [stats, setStats] = useState(dashboardStats)
 	const [weekly, setWeekly] = useState(weeklyData)
 	const [meals, setMeals] = useState(todayMeals)
+	const [macros, setMacros] = useState(macroData.map((m) => ({ ...m, value: 0, amount: 0 })))
 
 	useEffect(() => {
 		const phone = getStoredPhone()
@@ -30,14 +31,21 @@ export default function DashboardPage() {
 			.then((data) => {
 				if (data.length === 0) return
 
-				const todayStr = new Date().toISOString().split("T")[0]
-				const todayData = data.filter((m) => m.date.split("T")[0] === todayStr)
+				const mealDateKey = (input: string | Date) =>
+					typeof input === "string" ? input.split("T")[0] : input.toISOString().split("T")[0]
+				const now = new Date()
+				const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
+				const todayData = data.filter((m) => mealDateKey(m.date) === todayStr)
+				const latestDate = mealDateKey(data[0].date)
+				const displayDayData = todayData.length > 0
+					? todayData
+					: data.filter((m) => mealDateKey(m.date) === latestDate)
 
 				// Today's meals timeline
 				const mealTypes = ["Breakfast", "Lunch", "Snack", "Dinner"]
-				if (todayData.length > 0) {
+				if (displayDayData.length > 0) {
 					setMeals(
-						todayData.map((m, idx) => ({
+						displayDayData.map((m, idx) => ({
 							id: idx + 1,
 							type: mealTypes[idx % mealTypes.length],
 							name: m.mealName,
@@ -54,22 +62,53 @@ export default function DashboardPage() {
 				for (let i = 6; i >= 0; i--) {
 					const d = new Date()
 					d.setDate(d.getDate() - i)
-					last7[d.toISOString().split("T")[0]] = 0
+					last7[mealDateKey(d)] = 0
 				}
 				data.forEach((m) => {
-					const key = m.date.split("T")[0]
+					const key = mealDateKey(m.date)
 					if (key in last7) last7[key] += m.calories
 				})
 				setWeekly(
 					Object.entries(last7).map(([dateStr, cals]) => ({
-						day: dayLabels[new Date(dateStr).getDay()],
+						day: dayLabels[new Date(`${dateStr}T00:00:00Z`).getUTCDay()],
 						calories: Math.round(cals),
 					}))
 				)
 
-				// Update top stat cards with today's real totals
-				const totalCals = todayData.reduce((sum, m) => sum + m.calories, 0)
-				const totalProtein = todayData.reduce((sum, m) => sum + m.protein, 0)
+				// Macro distribution from displayed day meals
+				const macroSource = displayDayData
+
+				const macroTotals = macroSource.reduce(
+					(acc, m) => {
+						acc.protein += Number(m.protein) || 0
+						acc.carbs += Number(m.carbs) || 0
+						acc.fats += Number(m.fats) || 0
+						return acc
+					},
+					{ protein: 0, carbs: 0, fats: 0 }
+				)
+
+				const proteinCalories = macroTotals.protein * 4
+				const carbsCalories = macroTotals.carbs * 4
+				const fatsCalories = macroTotals.fats * 9
+				const totalMacroCalories = proteinCalories + carbsCalories + fatsCalories
+
+				if (totalMacroCalories > 0) {
+					const proteinPct = Math.round((proteinCalories / totalMacroCalories) * 100)
+					const carbsPct = Math.round((carbsCalories / totalMacroCalories) * 100)
+					const fatsPct = Math.max(0, 100 - proteinPct - carbsPct)
+
+					setMacros([
+						{ name: "Protein", value: proteinPct, color: "#16a34a", amount: Math.round(macroTotals.protein) },
+						{ name: "Carbs", value: carbsPct, color: "#22c55e", amount: Math.round(macroTotals.carbs) },
+						{ name: "Fat", value: fatsPct, color: "#86efac", amount: Math.round(macroTotals.fats) },
+					])
+				}
+
+				// Update top stat cards with displayed day totals
+				const totalCals = displayDayData.reduce((sum, m) => sum + m.calories, 0)
+				const totalProtein = displayDayData.reduce((sum, m) => sum + m.protein, 0)
+				const totalCarbs = displayDayData.reduce((sum, m) => sum + (Number(m.carbs) || 0), 0)
 				setStats((prev) =>
 					prev.map((s, idx) => {
 						if (idx === 0)
@@ -83,6 +122,12 @@ export default function DashboardPage() {
 								...s,
 								value: `${Math.round(totalProtein)}g`,
 								progressValue: Math.min(100, Math.round((totalProtein / 120) * 100)),
+							}
+						if (idx === 2)
+							return {
+								...s,
+								value: `${Math.round(totalCarbs)}g`,
+								progressValue: Math.min(100, Math.round((totalCarbs / 250) * 100)),
 							}
 						return s
 					})
@@ -112,7 +157,7 @@ export default function DashboardPage() {
 								</div>
 							</div>
 							<div className="flex items-baseline space-x-2">
-								<h2 className={`text-3xl font-bold tracking-tight ${idx === 3 ? 'text-green-600 dark:text-green-400' : ''}`}>{stat.value}</h2>
+								<h2 className={`text-3xl font-bold tracking-tight ${stat.title === 'Nutrition Score' ? 'text-green-600 dark:text-green-400' : ''}`}>{stat.value}</h2>
 								<span className="text-sm text-muted-foreground">/ {stat.target}</span>
 							</div>
 							<div className="mt-4 h-2 w-full bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
@@ -165,7 +210,7 @@ export default function DashboardPage() {
 						<ResponsiveContainer width="100%" height="100%">
 							<PieChart>
 								<Pie
-									data={macroData}
+									data={macros}
 									cx="50%"
 									cy="50%"
 									innerRadius={60}
@@ -174,11 +219,12 @@ export default function DashboardPage() {
 									dataKey="value"
 									stroke="none"
 								>
-									{macroData.map((entry, index) => (
+									{macros.map((entry, index) => (
 										<Cell key={`cell-${index}`} fill={entry.color} />
 									))}
 								</Pie>
 								<Tooltip 
+									formatter={(_value, _name, item) => [String(item?.payload?.amount ?? 0), item?.payload?.name ?? "Macro"]}
 									contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
 								/>
 							</PieChart>
@@ -190,10 +236,10 @@ export default function DashboardPage() {
 						</div>
 
 						<div className="flex justify-center gap-6 mt-2">
-							{macroData.map((macro, idx) => (
+							{macros.map((macro, idx) => (
 								<div key={idx} className="flex items-center gap-2">
 									<div className="w-3 h-3 rounded-full" style={{ backgroundColor: macro.color }} />
-									<span className="text-sm font-medium text-muted-foreground">{macro.name}</span>
+									<span className="text-sm font-medium text-muted-foreground">{macro.name} {macro.value}%</span>
 								</div>
 							))}
 						</div>

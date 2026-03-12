@@ -6,7 +6,6 @@ import {
   FileText,
   Flame,
   Activity,
-  Droplets,
   FileSpreadsheet
 } from "lucide-react"
 
@@ -42,15 +41,15 @@ export const dashboardStats = [
     progressValue: 66,
   },
   {
-    title: "Water Intake",
-    value: "5",
-    target: "8 glasses",
+    title: "Daily Carbs",
+    value: "0g",
+    target: "250g",
     unit: "",
-    icon: Droplets,
-    color: "text-blue-500",
+    icon: Activity,
+    color: "text-foreground",
     bgClass: "bg-neutral-100 dark:bg-neutral-800",
-    progressClass: "bg-cyan-500",
-    progressValue: 62,
+    progressClass: "bg-emerald-500",
+    progressValue: 0,
   },
   {
     title: "Nutrition Score",
@@ -107,28 +106,6 @@ export const healthProfileFields = [
   { id: "age", label: "Age", type: "input", inputType: "number", defaultValue: "28" },
   { id: "height", label: "Height (cm)", type: "input", inputType: "number", defaultValue: "175" },
   { id: "weight", label: "Weight (kg)", type: "input", inputType: "number", defaultValue: "72" },
-  { 
-    id: "activity", 
-    label: "Activity Level", 
-    type: "select", 
-    options: [
-      { value: "sedentary", label: "Sedentary" },
-      { value: "light", label: "Lightly Active", selected: true },
-      { value: "moderate", label: "Moderately Active" },
-      { value: "very", label: "Very Active" }
-    ]
-  },
-  { 
-    id: "goal", 
-    label: "Fitness Goal", 
-    type: "select", 
-    colSpan: 2, 
-    options: [
-      { value: "lose", label: "Lose Weight" },
-      { value: "maintain", label: "Maintain Weight" },
-      { value: "build", label: "Build Muscle", selected: true }
-    ]
-  }
 ]
 
 export const calculatedTargets = [
