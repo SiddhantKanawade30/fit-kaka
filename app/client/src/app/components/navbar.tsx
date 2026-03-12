@@ -58,12 +58,14 @@ export default function Navbar() {
 
         {/* Action Buttons */}
         <div className="hidden sm:flex items-center gap-3">
-          <Link
-            href="/dashboard"
+          <a
+            href="https://wa.me/15551495897?text=Hi"
+            target="_blank"
+            rel="noopener noreferrer"
             className="text-sm font-semibold text-white bg-[#25d366] hover:bg-[#128c7e] transition-colors px-5 py-2.5 rounded-full shadow-sm"
           >
             Get Started
-          </Link>
+          </a>
         </div>
       </div>
     </motion.header>

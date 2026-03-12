@@ -26,9 +26,14 @@ export default function Hero() {
           </p>
 
           {/* CTA Button */}
-          <button className="mt-10 px-8 py-3.5 bg-gradient-to-b from-[#4a4a4a] to-[#222222] border border-[#5a5a5a] text-white text-sm font-semibold rounded-lg shadow-lg hover:from-[#3a3a3a] hover:to-[#111111] transition-all duration-200">
+          <a 
+            href="https://wa.me/15551495897?text=Hi" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="mt-10 inline-block px-8 py-3.5 bg-gradient-to-b from-[#4a4a4a] to-[#222222] border border-[#5a5a5a] text-white text-sm font-semibold rounded-lg shadow-lg hover:from-[#3a3a3a] hover:to-[#111111] transition-all duration-200"
+          >
             Get Started
-          </button>
+          </a>
 
           {/* Phone Mockup */}
           <div className="mt-16 relative w-[300px] h-[380px] bg-white border-[10px] border-black rounded-t-[2.5rem] overflow-hidden shadow-2xl flex flex-col mx-auto translate-y-4">
