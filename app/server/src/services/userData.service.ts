@@ -1,5 +1,6 @@
 import { UserRepository } from "../database/index.js";
 import { sendWhatsAppMessage } from "../utils/index.js";
+import { sendVegetarianOptions } from "../utils/whatsapp.js";
 
 interface UserDataStatus {
   needsAge: boolean;
@@ -98,38 +99,30 @@ export class UserDataService {
         await sendWhatsAppMessage(phone, 
           "🎯 *Weight Loss Plan*\n\n" +
           "Let's gather some information to create your personalized diet plan.\n\n" +
-          "What is your current weight in kg?\n\n" +
-          "Example: 70"
+          "What is your current weight in kg?\n\n" 
         );
         break;
       
       case 'target_weight':
         await sendWhatsAppMessage(phone, 
-          "Great! What is your target weight in kg?\n\n" +
-          "Example: 65"
+          "Great! What is your target weight in kg?\n\n"
         );
         break;
       
       case 'age':
         await sendWhatsAppMessage(phone, 
-          "What is your age?\n\n" +
-          "Example: 25"
+          "What is your age?\n\n" 
         );
         break;
       
       case 'height':
         await sendWhatsAppMessage(phone, 
-          "What is your height in cm?\n\n" +
-          "Example: 170"
+          "What is your height in cm?\n\n" 
         );
         break;
       
       case 'vegetarian':
-        await sendWhatsAppMessage(phone, 
-          "Are you vegetarian?\n\n" +
-          "1️⃣ Yes (Vegetarian)\n" +
-          "2️⃣ No (Non-vegetarian)"
-        );
+        await sendVegetarianOptions(phone, "Are you vegetarian?");
         break;
       
       default:
@@ -149,8 +142,7 @@ export class UserDataService {
         const currentWeight = parseFloat(value);
         if (isNaN(currentWeight) || currentWeight < 20 || currentWeight > 400) {
           await sendWhatsAppMessage(phone, 
-            "Please enter a valid weight between 20-400 kg.\n\n" +
-            "Example: 70"
+            "Please enter a valid weight between 20-400 kg.\n\n" 
           );
           return;
         }
@@ -161,8 +153,7 @@ export class UserDataService {
         const targetWeight = parseFloat(value);
         if (isNaN(targetWeight) || targetWeight < 20 || targetWeight > 400) {
           await sendWhatsAppMessage(phone, 
-            "Please enter a valid target weight between 20-400 kg.\n\n" +
-            "Example: 65"
+            "Please enter a valid target weight between 20-400 kg.\n\n" 
           );
           return;
         }
@@ -173,8 +164,7 @@ export class UserDataService {
         const age = parseInt(value);
         if (isNaN(age) || age < 10 || age > 120) {
           await sendWhatsAppMessage(phone, 
-            "Please enter a valid age between 10-120 years.\n\n" +
-            "Example: 25"
+            "Please enter a valid age between 10-120 years.\n\n" 
           );
           return;
         }
@@ -185,8 +175,7 @@ export class UserDataService {
         const height = parseFloat(value);
         if (isNaN(height) || height < 90 || height > 250) {
           await sendWhatsAppMessage(phone, 
-            "Please enter a valid height between 90-250 cm.\n\n" +
-            "Example: 170"
+            "Please enter a valid height between 90-250 cm.\n\n" 
           );
           return;
         }

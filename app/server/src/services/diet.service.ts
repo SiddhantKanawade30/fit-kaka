@@ -1,6 +1,6 @@
 import { DietRepository } from "../database/index.js";
 import { UserRepository } from "../database/index.js";
-import { sendWhatsAppMessage } from "../utils/index.js";
+import { sendWhatsAppMessage, sendDietOptionsList, sendExistingDietList, sendVegetarianOptions } from "../utils/whatsapp.js";
 import { UserDataService } from "./userData.service.js";
 import { generateContent } from "../config/gemini.js";
 
@@ -106,38 +106,18 @@ export class DietService {
       const existingDiet = await DietRepository.findByUser(user);
 
       if (existingDiet) {
-        // User already has a diet plan, ask if they want to update
-        await sendWhatsAppMessage(user, 
-          "You already have a personalized diet plan! 🍽️\n\n" +
-          "Would you like to:\n" +
-          "1️⃣ View your current diet plan\n" +
-          "2️⃣ Update your diet plan\n" +
-          "3️⃣ Go back to main menu"
-        );
+        // User already has a diet plan, send interactive list
+        await sendExistingDietList(user);
         return 'diet_exists';
       }
 
       if (existingUser && existingUser.goalProfileCompleted) {
-        // User exists with preferences, skip basic questions
-        await sendWhatsAppMessage(user, 
-          "Welcome back! Let's customize your diet plan 🎯\n\n" +
-          "What's your primary goal?\n" +
-          "1️⃣ Weight Loss\n" +
-          "2️⃣ Weight Gain\n" +
-          "3️⃣ Muscle Gain\n" +
-          "4️⃣ Maintain Weight"
-        );
+        // User exists with preferences, send interactive list
+        await sendDietOptionsList(user, "🎯 Welcome Back! Customize Your Diet");
         return 'ask_goal';
       } else {
-        // New user, need basic info first
-        await sendWhatsAppMessage(user, 
-          "Welcome! Let's create your personalized diet plan 🎯\n\n" +
-          "First, what's your primary goal?\n" +
-          "1️⃣ Weight Loss\n" +
-          "2️⃣ Weight Gain\n" +
-          "3️⃣ Muscle Gain\n" +
-          "4️⃣ Maintain Weight"
-        );
+        // New user, send interactive list
+        await sendDietOptionsList(user, "🎯 Create Your Personalized Diet Plan");
         return 'ask_goal';
       }
     } catch (error) {
@@ -173,12 +153,7 @@ export class DietService {
       }
 
       // For other goals, proceed with vegetarian question
-      await sendWhatsAppMessage(user, 
-        "Great choice! 🎯\n\n" +
-        "Are you vegetarian?\n" +
-        "1️⃣ Yes (Vegetarian)\n" +
-        "2️⃣ No (Non-vegetarian)"
-      );
+      await sendVegetarianOptions(user, "Great choice! 🎯\n\nAre you vegetarian?");
       return 'ask_vegetarian';
     } catch (error) {
       console.error("Error in handleDietGoal:", error);
@@ -314,14 +289,7 @@ JSON schema:
         }
       } else if (choice === '2' || choice.toLowerCase().includes('update')) {
         await DietRepository.deleteByUser(user);
-        await sendWhatsAppMessage(user, 
-          "Let's create your updated diet plan! 🎯\n\n" +
-          "What's your new goal?\n" +
-          "1️⃣ Weight Loss\n" +
-          "2️⃣ Weight Gain\n" +
-          "3️⃣ Muscle Gain\n" +
-          "4️⃣ Maintain Weight"
-        );
+        await sendDietOptionsList(user, "🎯 Let's create your updated diet plan!");
         return 'ask_goal';
       } else {
         // Go back to main menu

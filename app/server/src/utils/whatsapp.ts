@@ -89,6 +89,182 @@ export async function sendWhatsAppTypingIndicator(messageId: string) {
     }
 }
 
+export async function sendDietOptionsList(to: string, headerText: string = "🎯 Diet Options") {
+    const token = process.env.WHATSAPP_TOKEN;
+    const phoneNumberId = process.env.PHONE_NUMBER_ID;
+
+    try {
+        const response = await axios.post(
+            `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`,
+            {
+                messaging_product: "whatsapp",
+                to,
+                type: "interactive",
+                interactive: {
+                    type: "list",
+                    header: {
+                        type: "text",
+                        text: headerText
+                    },
+                    body: {
+                        text: "Choose your fitness goal:"
+                    },
+                    footer: {
+                        text: "Powered by Fit-Kaka"
+                    },
+                    action: {
+                        button: "Select Goal",
+                        sections: [
+                            {
+                                title: "🏃‍♂️ Weight Management",
+                                rows: [
+                                    {
+                                        id: "weight_loss",
+                                        title: "📉 Weight Loss",
+                                        description: "Lose weight with personalized diet"
+                                    },
+                                    {
+                                        id: "weight_gain", 
+                                        title: "📈 Weight Gain",
+                                        description: "Gain weight healthily"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+        
+        console.log("Diet options list sent successfully:", response.data);
+        return response.data;
+    } catch (error) {
+        console.error("Error sending diet options list:", (error as any).response?.data || (error as Error).message);
+        throw error;
+    }
+}
+
+export async function sendExistingDietList(to: string) {
+    const token = process.env.WHATSAPP_TOKEN;
+    const phoneNumberId = process.env.PHONE_NUMBER_ID;
+
+    try {
+        const response = await axios.post(
+            `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`,
+            {
+                messaging_product: "whatsapp",
+                to,
+                type: "interactive",
+                interactive: {
+                    type: "list",
+                    header: {
+                        type: "text",
+                        text: "🍽️ Diet Plan Options"
+                    },
+                    body: {
+                        text: "You already have a diet plan! What would you like to do?"
+                    },
+                    footer: {
+                        text: "Powered by Fit-Kaka"
+                    },
+                    action: {
+                        button: "Choose Action",
+                        sections: [
+                            {
+                                title: "📋 Plan Management",
+                                rows: [
+                                    {
+                                        id: "view_diet",
+                                        title: "👁️ View Current Plan",
+                                        description: "See your existing diet plan"
+                                    },
+                                    {
+                                        id: "update_diet",
+                                        title: "✏️ Update Diet Plan", 
+                                        description: "Modify your current diet plan"
+                                    },
+                                    {
+                                        id: "main_menu",
+                                        title: "🏠 Main Menu",
+                                        description: "Go back to main options"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+        
+        console.log("Existing diet list sent successfully:", response.data);
+        return response.data;
+    } catch (error) {
+        console.error("Error sending existing diet list:", (error as any).response?.data || (error as Error).message);
+        throw error;
+    }
+}
+
+export async function sendVegetarianOptions(to: string, message: string = "Are you vegetarian?") {
+    const token = process.env.WHATSAPP_TOKEN;
+    const phoneNumberId = process.env.PHONE_NUMBER_ID;
+
+    try {
+        const response = await axios.post(
+            `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`,
+            {
+                messaging_product: "whatsapp",
+                to,
+                type: "interactive",
+                interactive: {
+                    type: "button",
+                    body: {
+                        text: message + "\n\nChoose below 👇"
+                    },
+                    action: {
+                        buttons: [
+                            {
+                                type: "reply",
+                                reply: {
+                                    id: "vegetarian_yes",
+                                    title: "🥗 Yes"
+                                }
+                            },
+                            {
+                                type: "reply",
+                                reply: {
+                                    id: "vegetarian_no",
+                                    title: "🍗 No"
+                                }
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+        
+        console.log("Vegetarian options sent successfully:", response.data);
+        return response.data;
+    } catch (error) {
+        console.error("Error sending vegetarian options:", (error as any).response?.data || (error as Error).message);
+        throw error;
+    }
+}
+
 export async function sendMoreButton(to: string, text: string) {
     const token = process.env.WHATSAPP_TOKEN;
     const phoneNumberId = process.env.PHONE_NUMBER_ID;

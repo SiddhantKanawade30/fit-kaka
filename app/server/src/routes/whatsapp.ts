@@ -203,17 +203,40 @@ I'll analyze your meals and provide detailed nutrition info instantly! 🚀`;
             }
         }
 
-        // Handle custom diet flow responses
-        if (messageBody.match(/^[1-4]$/) || messageBody.toLowerCase().match(/^(weight_loss|weight_gain|muscle_gain|maintain_weight)$/)) {
-            // This is a goal selection response
-            const result = await DietService.handleDietGoal(from, messageBody);
+        // Handle interactive list replies
+        if (buttonReply === "weight_loss" || buttonReply === "weight_gain" || 
+            buttonReply === "muscle_gain" || buttonReply === "maintain_weight") {
+            // Handle diet goal selection from interactive list
+            const result = await DietService.handleDietGoal(from, buttonReply);
+            return res.sendStatus(200);
+        }
+
+        if (buttonReply === "view_diet" || buttonReply === "update_diet" || buttonReply === "main_menu") {
+            // Handle existing diet plan options from interactive list
+            const choice = buttonReply === "view_diet" ? "1" : 
+                         buttonReply === "update_diet" ? "2" : "3";
+            const result = await DietService.handleExistingDiet(from, choice);
+            return res.sendStatus(200);
+        }
+
+        // Handle vegetarian button responses
+        if (buttonReply === "vegetarian_yes" || buttonReply === "vegetarian_no") {
+            // Find the current goal from user context or default to weight loss
+            const user = await getOrCreateUser(from);
+            // For now, we'll use weight_loss as default - in production, you'd track the current goal
+            const goal = 'weight_loss';
+            const vegetarianResponse = buttonReply === "vegetarian_yes" ? "1" : "2";
+            await DietService.handleVegetarianStatus(from, vegetarianResponse, goal);
             return res.sendStatus(200);
         }
 
         if (messageBody.toLowerCase().match(/^(1|2|yes|no|vegetarian|non-vegetarian)$/)) {
             // This is a vegetarian status response
             // We need to get the goal from the previous step - for now, we'll handle it simply
-            const vegetarian = messageBody.toLowerCase() === '1' || 
+            const user = await getOrCreateUser(from);
+            // For now, we'll use weight_loss as default - in production, you'd track the current goal
+            const goal = 'weight_loss';
+            const vegetarianResponse = messageBody.toLowerCase() === '1' || 
                              messageBody.toLowerCase() === 'yes' || 
                              messageBody.toLowerCase() === 'vegetarian';
             

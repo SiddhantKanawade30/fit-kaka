@@ -182,7 +182,7 @@ export default function FeaturesPage() {
                   /* OTHER CARDS */
                   <div className="bg-white border border-gray-200 rounded-xl p-4 h-[240px] flex items-center justify-center mb-6">
                     <Image
-                      src={feature.image}
+                      src={feature.image as any}
                       alt="Meal analysis preview"
                       width={400}
                       height={260}
