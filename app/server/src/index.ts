@@ -5,6 +5,7 @@ import { connectDB } from "./config/db.js";
 import { userMiddleware } from "./api/auth/middleware.js";
 import loginRouter from "./api/auth/login.js";
 import dashboardRouter from "./api/dashboard/index.js";
+import mealsRouter from "./routes/meals.js";
 import cors from "cors";
 
 dotenv.config();
@@ -19,6 +20,9 @@ connectDB();
 
 // WhatsApp webhook routes
 app.use("/", whatsappRouter);
+
+// Meals and user profile routes
+app.use("/", mealsRouter);
 
 // Auth routes
 app.use("/auth", loginRouter);
