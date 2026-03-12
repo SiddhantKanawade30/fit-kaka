@@ -1,9 +1,23 @@
 import { MealRepository } from "../../database/index.js";
+import { UserRepository } from "../../database/index.js";
 import { sendWhatsAppMessage } from "../../utils/index.js";
+import jwt from "jsonwebtoken";
+
+const DASHBOARD_BASE_URL = process.env.DASHBOARD_BASE_URL ?? "http://localhost:3000";
+const SUMMARY_TIMEZONE = process.env.SUMMARY_TIMEZONE ?? "Asia/Kolkata";
+
+function getDateKeyInTimezone(date: Date, timeZone: string) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone }).format(date);
+}
 
 export async function handleDailySummary(user: string) {
   try {
-    const todayMeals = await MealRepository.getTodayMeals(user);
+    // Fetch broader window and then filter by user's summary timezone date key
+    const recentMeals = await MealRepository.findByUser(user, 200);
+    const todayKey = getDateKeyInTimezone(new Date(), SUMMARY_TIMEZONE);
+    const todayMeals = recentMeals.filter((meal: any) =>
+      getDateKeyInTimezone(new Date(meal.createdAt), SUMMARY_TIMEZONE) === todayKey
+    );
     
     if (todayMeals.length === 0) {
       await sendWhatsAppMessage(user, "No meals logged today! Start tracking your nutrition! 📝");
@@ -17,13 +31,49 @@ export async function handleDailySummary(user: string) {
       fats: acc.fats + meal.fats
     }), { calories: 0, proteins: 0, carbs: 0, fats: 0 });
 
+    const roundedTotals = {
+      calories: Math.round(totals.calories),
+      proteins: Math.round(totals.proteins * 10) / 10,
+      carbs: Math.round(totals.carbs * 10) / 10,
+      fats: Math.round(totals.fats * 10) / 10,
+    };
+
+    const profile = await UserRepository.findByPhone(user);
+
+    const progressLines: string[] = [];
+    if (profile?.dailyCalories) {
+      const pct = Math.min(999, Math.round((roundedTotals.calories / profile.dailyCalories) * 100));
+      progressLines.push(`🔥 Calories: ${roundedTotals.calories}/${profile.dailyCalories} (${pct}%)`);
+    }
+    if (profile?.dailyProteinIntake) {
+      const pct = Math.min(999, Math.round((roundedTotals.proteins / profile.dailyProteinIntake) * 100));
+      progressLines.push(`🥩 Protein: ${roundedTotals.proteins}/${profile.dailyProteinIntake}g (${pct}%)`);
+    }
+    if (profile?.dailyCarbs) {
+      const pct = Math.min(999, Math.round((roundedTotals.carbs / profile.dailyCarbs) * 100));
+      progressLines.push(`🍞 Carbs: ${roundedTotals.carbs}/${profile.dailyCarbs}g (${pct}%)`);
+    }
+    if (profile?.dailyFats) {
+      const pct = Math.min(999, Math.round((roundedTotals.fats / profile.dailyFats) * 100));
+      progressLines.push(`🧈 Fats: ${roundedTotals.fats}/${profile.dailyFats}g (${pct}%)`);
+    }
+
+    const dashboardToken = jwt.sign(
+      { phone: user, purpose: "dashboard_link" },
+      process.env.JWT_TOKEN || "fallback-secret-key",
+      { expiresIn: "30m" }
+    );
+    const dashboardLink = `${DASHBOARD_BASE_URL}/direct?token=${encodeURIComponent(dashboardToken)}&phone=${encodeURIComponent(user)}`;
+
     const message = `📈 *Daily Nutrition Summary*\n\n` +
-      `🍽️ Meals: ${todayMeals.length}\n` +
-      `🔥 Total Calories: ${totals.calories} kcal\n` +
-      `🥩 Total Proteins: ${totals.proteins}g\n` +
-      `🍞 Total Carbs: ${totals.carbs}g\n` +
-      `🧈 Total Fats: ${totals.fats}g\n\n` +
-      `${totals.calories > 2000 ? '🎯 Great job fueling up!' : '💪 Keep tracking!'}`;
+      `🗓 Date: ${todayKey} (${SUMMARY_TIMEZONE})\n` +
+      `🍽️ Meals Logged: ${todayMeals.length}\n` +
+      `🔥 Total Calories: ${roundedTotals.calories} kcal\n` +
+      `🥩 Total Proteins: ${roundedTotals.proteins}g\n` +
+      `🍞 Total Carbs: ${roundedTotals.carbs}g\n` +
+      `🧈 Total Fats: ${roundedTotals.fats}g\n\n` +
+      `${progressLines.length > 0 ? `🎯 *Goal Progress*\n${progressLines.join("\n")}\n\n` : ""}` +
+      `🔗 *View your dashboard*\n${dashboardLink}`;
 
     await sendWhatsAppMessage(user, message);
   } catch (error) {

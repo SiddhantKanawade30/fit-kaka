@@ -72,7 +72,7 @@ function logGeminiUsage(
     });
 }
 
-export const generateContent = async (prompt: string, context: GeminiUsageContext = { requestType: "generic_text" }) => {
+export const generateContent = async (prompt: string, context: GeminiUsageContext) => {
     try {
         const startedAt = Date.now();
         // Use gemini-2.5-flash model
@@ -99,7 +99,7 @@ export const generateContentWithImage = async (
     prompt: string,
     imageData: Buffer,
     mimeType: string,
-    context: GeminiUsageContext = { requestType: "food_image_analysis" }
+    context: GeminiUsageContext
 ) => {
     try {
         const startedAt = Date.now();
@@ -146,7 +146,7 @@ export const generateContentWithImage = async (
 export const generateContentWithImageUrl = async (
     prompt: string,
     imageUrl: string,
-    context: GeminiUsageContext = { requestType: "food_image_url_analysis" }
+    context: GeminiUsageContext
 ) => {
     try {
         const startedAt = Date.now();
