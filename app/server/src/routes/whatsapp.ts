@@ -163,6 +163,23 @@ router.post("/webhook/whatsapp", async (req: Request, res: Response) => {
     try {
         const user = await getOrCreateUser(from);
 
+        // Handle greeting messages - Check this FIRST before any other processing
+        const greetings = ["hi", "hey", "hello"];
+        const isGreeting = greetings.some(greeting => 
+            messageBody.toLowerCase().trim() === greeting
+        );
+
+        if (isGreeting) {
+            const greetingMessage = `👋 *Hi! This is FIT KAKA!* 🥗
+
+Start tracking your nutrition by uploading a photo or text of your food! 📸📝
+
+I'll analyze your meals and provide detailed nutrition info instantly! 🚀`;
+            
+            await sendWhatsAppMessage(from, greetingMessage);
+            return res.sendStatus(200);
+        }
+
         // Resume onboarding if already active
         if (user.goalSetupStep) {
             await handleGoalSetup(user, messageBody);
