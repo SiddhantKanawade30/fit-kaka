@@ -214,7 +214,7 @@ export class DietService {
       console.log("Generated diet plan:", JSON.stringify(dietPlan, null, 2));
       
       // Save diet plan
-      await DietRepository.create({
+      await DietRepository.updateByUser(userPhone, {
         user: userPhone,
         goal: normalizedGoal,
         isVegetarian: vegetarian,

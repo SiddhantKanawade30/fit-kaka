@@ -7,6 +7,14 @@ export class DietRepository {
       const diet = new Diet(dietData);
       return await diet.save();
     } catch (error) {
+      const mongoError = error as { code?: number };
+      if (mongoError?.code === 11000 && dietData?.user) {
+        return await Diet.findOneAndUpdate(
+          { user: dietData.user },
+          { ...dietData, updatedAt: new Date() },
+          { new: true }
+        );
+      }
       console.error("Error creating diet:", error);
       throw error;
     }
