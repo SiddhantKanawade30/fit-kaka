@@ -2,14 +2,19 @@ import mongoose from "mongoose";
 import { Meal } from "../schema/meal.js";
 
 export class MealRepository {
-  static async create(user: string, nutritionData: any) {
+  static async create(user: string, nutritionData: any, options?: { sourceMessageId?: string }) {
     try {
       const meal = new Meal({
         user,
+        sourceMessageId: options?.sourceMessageId,
         ...nutritionData
       });
       return await meal.save();
     } catch (error) {
+      const mongoError = error as { code?: number };
+      if (mongoError?.code === 11000) {
+        return null;
+      }
       console.error("Error creating meal:", error);
       throw error;
     }

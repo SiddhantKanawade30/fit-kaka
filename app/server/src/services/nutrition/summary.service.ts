@@ -3,21 +3,59 @@ import { UserRepository } from "../../database/index.js";
 import { sendWhatsAppMessage } from "../../utils/index.js";
 import jwt from "jsonwebtoken";
 
-const DASHBOARD_BASE_URL = process.env.DASHBOARD_BASE_URL ?? "http://localhost:3000";
-const SUMMARY_TIMEZONE = process.env.SUMMARY_TIMEZONE ?? "Asia/Kolkata";
+const DASHBOARD_BASE_URL = process.env.DASHBOARD_BASE_URL?.trim() ?? "";
+const SUMMARY_TIMEZONE = process.env.SUMMARY_TIMEZONE ?? "UTC";
 
 function getDateKeyInTimezone(date: Date, timeZone: string) {
   return new Intl.DateTimeFormat("en-CA", { timeZone }).format(date);
 }
 
+function buildDashboardLink(phone: string, token: string): string | null {
+  if (!DASHBOARD_BASE_URL) {
+    return null;
+  }
+
+  let baseUrl: URL;
+  try {
+    baseUrl = new URL(DASHBOARD_BASE_URL);
+  } catch {
+    return null;
+  }
+
+  const localHosts = new Set(["localhost", "127.0.0.1", "0.0.0.0"]);
+  if (localHosts.has(baseUrl.hostname.toLowerCase())) {
+    return null;
+  }
+
+  const directUrl = new URL("/direct", baseUrl);
+  directUrl.searchParams.set("token", token);
+  directUrl.searchParams.set("phone", phone);
+
+  return directUrl.toString();
+}
+
 export async function handleDailySummary(user: string) {
   try {
-    // Fetch broader window and then filter by user's summary timezone date key
+    // Fetch broader window and then filter by configured summary date key
     const recentMeals = await MealRepository.findByUser(user, 200);
     const todayKey = getDateKeyInTimezone(new Date(), SUMMARY_TIMEZONE);
-    const todayMeals = recentMeals.filter((meal: any) =>
+    const mealsForDay = recentMeals.filter((meal: any) =>
       getDateKeyInTimezone(new Date(meal.createdAt), SUMMARY_TIMEZONE) === todayKey
     );
+
+    // Defensive dedupe in case the same inbound webhook is retried.
+    const seenSourceIds = new Set<string>();
+    const todayMeals = mealsForDay.filter((meal: any) => {
+      const sourceId = typeof meal.sourceMessageId === "string" ? meal.sourceMessageId.trim() : "";
+      if (!sourceId) {
+        return true;
+      }
+      if (seenSourceIds.has(sourceId)) {
+        return false;
+      }
+      seenSourceIds.add(sourceId);
+      return true;
+    });
     
     if (todayMeals.length === 0) {
       await sendWhatsAppMessage(user, "No meals logged today! Start tracking your nutrition! 📝");
@@ -61,9 +99,9 @@ export async function handleDailySummary(user: string) {
     const dashboardToken = jwt.sign(
       { phone: user, purpose: "dashboard_link" },
       process.env.JWT_TOKEN || "fallback-secret-key",
-      { expiresIn: "30m" }
+      { expiresIn: "12h" }
     );
-    const dashboardLink = `${DASHBOARD_BASE_URL}/direct?token=${encodeURIComponent(dashboardToken)}&phone=${encodeURIComponent(user)}`;
+    const dashboardLink = buildDashboardLink(user, dashboardToken);
 
     const message = `📈 *Daily Nutrition Summary*\n\n` +
       `🗓 Date: ${todayKey} (${SUMMARY_TIMEZONE})\n` +
@@ -73,7 +111,9 @@ export async function handleDailySummary(user: string) {
       `🍞 Total Carbs: ${roundedTotals.carbs}g\n` +
       `🧈 Total Fats: ${roundedTotals.fats}g\n\n` +
       `${progressLines.length > 0 ? `🎯 *Goal Progress*\n${progressLines.join("\n")}\n\n` : ""}` +
-      `🔗 *View your dashboard*\n${dashboardLink}`;
+      (dashboardLink
+        ? `🔗 *View your dashboard*\n${dashboardLink}`
+        : `🔗 *Dashboard link unavailable*\nPlease set DASHBOARD_BASE_URL to your public client URL.`);
 
     await sendWhatsAppMessage(user, message);
   } catch (error) {
