@@ -259,28 +259,34 @@ export default function DashboardPage() {
 					</CardHeader>
 					<CardContent className="p-0">
 						<div className="divide-y divide-border/50">
-							{meals.map((meal) => (
-								<div key={meal.id} className="flex gap-4 p-4 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
-									<div className="flex flex-col flex-1 min-w-0">
-										<div className="flex justify-between items-start mb-0.5">
-											<p className="text-xs font-semibold text-green-600 dark:text-green-500 uppercase tracking-wider">{meal.type}</p>
-											<div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium bg-neutral-100 dark:bg-neutral-800 px-2 py-1 rounded-md">
-												<Clock className="size-3" />
-												<span>{meal.time}</span>
+							{meals.length === 0 ? (
+								<div className="p-4 text-sm text-muted-foreground">
+									No meals logged for today yet.
+								</div>
+							) : (
+								meals.map((meal) => (
+									<div key={meal.id} className="flex gap-4 p-4 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
+										<div className="flex flex-col flex-1 min-w-0">
+											<div className="flex justify-between items-start mb-0.5">
+												<p className="text-xs font-semibold text-green-600 dark:text-green-500 uppercase tracking-wider">{meal.type}</p>
+												<div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium bg-neutral-100 dark:bg-neutral-800 px-2 py-1 rounded-md">
+													<Clock className="size-3" />
+													<span>{meal.time}</span>
+												</div>
+											</div>
+											<p className="text-sm font-medium truncate">{meal.name}</p>
+											<div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+												<span className="flex items-center gap-1">
+													<Flame className="size-3" /> {meal.calories} kcal
+												</span>
+												<span className="flex items-center gap-1">
+													<Activity className="size-3" /> Protein: {meal.protein}
+												</span>
 											</div>
 										</div>
-										<p className="text-sm font-medium truncate">{meal.name}</p>
-										<div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-											<span className="flex items-center gap-1">
-												<Flame className="size-3" /> {meal.calories} kcal
-											</span>
-											<span className="flex items-center gap-1">
-												<Activity className="size-3" /> Protein: {meal.protein}
-											</span>
-										</div>
 									</div>
-								</div>
-							))}
+								))
+							)}
 						</div>
 					</CardContent>
 				</Card>

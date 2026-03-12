@@ -95,12 +95,7 @@ export const fullMealHistory = [
   { id: 5, date: "2026-03-09", meal: "Grilled Salmon & Veggies", calories: 450, protein: "40g" },
 ]
 
-export const todayMeals = [
-  { id: 1, type: "Breakfast", name: "Oatmeal with Berries", calories: 320, protein: "12g", time: "8:42 AM" },
-  { id: 2, type: "Lunch", name: "Chicken Rice Bowl", calories: 520, protein: "32g", time: "1:15 PM" },
-  { id: 3, type: "Snack", name: "Apple & Peanut Butter", calories: 220, protein: "6g", time: "4:05 PM" },
-  { id: 4, type: "Dinner", name: "Paneer Butter Masala with 2 Rotis", calories: 650, protein: "24g", time: "8:10 PM" },
-]
+export const todayMeals: Array<{ id: number; type: string; name: string; calories: number; protein: string; time: string }> = []
 
 export const healthProfileFields = [
   { id: "age", label: "Age", type: "input", inputType: "number", defaultValue: "28" },
