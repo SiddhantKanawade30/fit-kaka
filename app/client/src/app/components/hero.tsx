@@ -1,163 +1,116 @@
-"use client";
-
-import React from "react";
-import { motion } from "framer-motion";
-import { ArrowRight, Play, MessageCircle, CheckCircle2 } from "lucide-react";
-import Link from "next/link";
-
 export default function Hero() {
   return (
-    <section id="home" className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden w-full">
-      {/* Background gradients */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[600px] max-w-[1000px] pointer-events-none -z-10">
-        <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[800px] h-[600px] rounded-full bg-[#25d366]/20 blur-[120px] mix-blend-multiply opacity-80" />
-        <div className="absolute top-[10%] left-[20%] w-[400px] h-[400px] rounded-full bg-[#128c7e]/20 blur-[100px] opacity-70" />
-        <div className="absolute top-[30%] right-[20%] w-[500px] h-[500px] rounded-full bg-[#075e54]/10 blur-[100px] opacity-60" />
-      </div>
+    <div className="w-full bg-white/50">
+    <section className="relative w-full mx-auto overflow-hidden bg-white/50 pb-0 pt-20 rounded-b-[3rem]">
+      {/* Background Gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-white/100 via-green-50/50 to-green-400/50 pointer-events-none z-0" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-4xl mx-auto space-y-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#dcf8c6] border border-[#25d366]/30 text-[#075e54] text-sm font-medium mb-4 shadow-sm"
-          >
-            <span className="flex h-2 w-2 rounded-full bg-[#25d366] animate-pulse" />
-            V1.0 is now live!
-          </motion.div>
+      {/* Concentric Rings (Decorative) */}
+      <div className="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border-2 border-white/60 rounded-full pointer-events-none z-0" />
+      <div className="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] border-2 border-white/40 rounded-full pointer-events-none z-0" />
+      <div className="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1300px] h-[1300px] border-3 border-white/30 rounded-full pointer-events-none z-0" />
 
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-5xl md:text-7xl font-bold tracking-tight text-neutral-900 leading-[1.1]"
-          >
-            AI Powered <br className="hidden md:block" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#075e54] via-[#128c7e] to-[#25d366] relative inline-block">
-              Nutrition Tracking
-              {/* Decorative underline */}
-              <svg className="absolute w-full h-3 -bottom-1 left-0 text-[#25d366]/40" viewBox="0 0 100 10" preserveAspectRatio="none">
-                <path d="M0,5 Q50,10 100,5" stroke="currentColor" strokeWidth="4" fill="none" />
-              </svg>
-            </span>{" "}
-            Through WhatsApp
-          </motion.h1>
+      {/* Main Content Container */}
+      <div className="relative z-10 max-w-5xl mx-auto px-6 flex flex-col items-center text-center">
+        
+        {/* Headline */}
+        <h1 className="text-5xl pt-30 md:text-6xl lg:text-[64px] font-bold text-gray-900 leading-[1.1] tracking-tight">
+          
+          Snap Your Food,
+          <br /> Know Your <span className="text-green-600">Nutrition</span>
+        </h1>
 
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-lg md:text-xl text-neutral-600 max-w-2xl mx-auto leading-relaxed"
-          >
-            FIT KAKA is an AI-powered WhatsApp bot that allows users to track meals effortlessly. Just send a food photo or text message, and we'll calculate your calories, macros, and fitness progress instantly.
-          </motion.p>
+        {/* Subheadline */}
+        <p className="mt-6 text-[15px] md:text-base text-gray-500 max-w-2xl mx-auto leading-relaxed">
+          Send a photo or message of your food on WhatsApp and instantly get calories, protein, carbs, and fats powered by AI.
+        </p>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4"
-          >
-            <Link
-              href="/dashboard"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-[#25d366] to-[#128c7e] text-white font-semibold text-lg shadow-lg shadow-[#25d366]/25 hover:shadow-[#25d366]/40 hover:-translate-y-0.5 transition-all duration-300"
-            >
-              Get Started
-              <ArrowRight className="size-5" />
-            </Link>
-            <Link
-              href="#demo"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-white border border-neutral-200 text-neutral-700 font-semibold text-lg hover:bg-neutral-50 transition-colors shadow-sm"
-            >
-              <Play className="size-5 text-neutral-500" />
-              View Demo
-            </Link>
-          </motion.div>
-        </div>
+        {/* CTA Button */}
+        <button className="mt-10 px-8 py-3.5 bg-gradient-to-b from-[#4a4a4a] to-[#222222] border border-[#5a5a5a] text-white text-sm font-semibold rounded-lg shadow-lg hover:from-[#3a3a3a] hover:to-[#111111] transition-all duration-200">
+          Get Started
+        </button>
 
-        {/* Phone Mockup Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.5, type: "spring", bounce: 0.4 }}
-          className="relative mt-20 md:mt-32 max-w-5xl mx-auto"
-        >
-          <div className="relative rounded-[2rem] md:rounded-[3rem] p-2 bg-white/40 shadow-2xl shadow-neutral-900/10 backdrop-blur-xl border border-white/40 ring-1 ring-neutral-900/5">
-            <div className="rounded-[1.75rem] md:rounded-[2.75rem] overflow-hidden bg-neutral-100 flex items-center justify-center relative aspect-[16/9] md:aspect-[21/9]">
-              {/* WhatsApp Interface Mockup */}
-              <div className="absolute inset-x-0 bottom-0 top-12 bg-[#ece5dd] flex justify-center">
-                 {/* Decorative mock phone frame */}
-                 <div className="w-[320px] h-[580px] mt-4 md:mt-12 bg-black rounded-[2.5rem] shadow-2xl border-8 border-black overflow-hidden flex flex-col relative z-10 transition-transform hover:-translate-y-2 duration-500">
-                    {/* Header */}
-                    <div className="bg-[#075e54] text-white px-4 py-3 flex items-center gap-3 relative z-10 shadow-sm">
-                      <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-xl font-bold">
-                        FK
-                      </div>
-                      <div>
-                        <div className="font-semibold">FIT KAKA Bot</div>
-                        <div className="text-[10px] opacity-80">online</div>
-                      </div>
-                    </div>
-                    {/* Chat Area */}
-                    <div className="flex-1 bg-[#ece5dd] p-4 flex flex-col gap-4 overflow-hidden relative">
-                       {/* Background pattern simulate */}
-                       <div className="absolute inset-0 opacity-5" style={{backgroundImage: "url('https://static.whatsapp.net/rsrc.php/v3/yl/r/r_QNEW3s1P_.png')"}} />
-                       
-                       <div className="flex flex-col gap-1 items-end relative z-10">
-                         <div className="bg-[#dcf8c6] text-[#111b21] px-3 py-1.5 rounded-lg rounded-tr-none shadow-sm max-w-[85%] text-sm">
-                           I just ate 2 eggs and a slice of whole wheat toast.
-                         </div>
-                         <span className="text-[10px] text-neutral-500 mr-1">10:42 AM</span>
-                       </div>
+        {/* Phone Mockup */}
+        <div className="mt-16 relative w-[300px] h-[380px] bg-white border-[10px] border-black rounded-t-[2.5rem] overflow-hidden shadow-2xl flex flex-col mx-auto translate-y-4">
+          
+          {/* Dynamic Island / Camera Notch */}
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 w-24 h-7 bg-black rounded-full z-20 flex justify-end items-center px-3">
+             <div className="w-2 h-2 rounded-full bg-white/20"></div>
+          </div>
 
-                       <div className="flex flex-col gap-1 items-start relative z-10">
-                         <div className="bg-white text-[#111b21] px-3 py-2 rounded-lg rounded-tl-none shadow-sm max-w-[90%] text-sm">
-                           <div className="font-semibold text-[#128c7e] mb-1 flex items-center gap-1.5"><CheckCircle2 className="size-3"/> Meal Logged!</div>
-                           <p className="mb-2"><strong>2 Eggs & 1 Wheat Toast</strong></p>
-                           <div className="grid grid-cols-2 gap-2 text-xs mb-2">
-                             <div className="bg-[#dcf8c6] px-2 py-1 rounded text-[#075e54] font-medium">Calories: ~220</div>
-                             <div className="bg-[#dcf8c6] px-2 py-1 rounded text-[#075e54] font-medium">Protein: 16g</div>
-                             <div className="bg-[#dcf8c6] px-2 py-1 rounded text-[#075e54] font-medium">Carbs: 15g</div>
-                             <div className="bg-[#dcf8c6] px-2 py-1 rounded text-[#075e54] font-medium">Fat: 11g</div>
-                           </div>
-                           <p className="text-neutral-500 text-xs italic">You are currently at 1650/2200 kcal for today.</p>
-                         </div>
-                         <span className="text-[10px] text-neutral-500 ml-1">10:42 AM</span>
-                       </div>
-                    </div>
-                    {/* Input Area */}
-                    <div className="bg-[#f0f2f5] px-3 py-2 flex items-center gap-2 relative z-10">
-                       <div className="flex-1 bg-white rounded-full px-4 py-2 text-sm text-neutral-400 shadow-sm">
-                         Type a message...
-                       </div>
-                       <div className="w-10 h-10 rounded-full bg-[#128c7e] items-center justify-center flex text-white shadow-sm">
-                          <MessageCircle className="size-5 fill-current" />
-                       </div>
-                    </div>
-                 </div>
+          {/* Status Bar */}
+          <div className="flex justify-between items-center px-5 pt-3 pb-2 z-10 bg-white">
+            <span className="text-[10px] font-bold">9:41</span>
+            <div className="flex gap-1 items-center">
+              {/* Cellular Icon */}
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M2,22h20V2L2,22z"/></svg>
+              {/* Wifi Icon */}
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12,3C7.79,3 3.7,4.41 0.38,6.9L12,21.05l11.62-14.15C20.3,4.41 16.21,3 12,3z"/></svg>
+              {/* Battery Icon */}
+              <div className="w-5 h-2.5 border border-black rounded-[3px] p-[1px] relative">
+                <div className="bg-black w-[80%] h-full rounded-[1px]"></div>
+                <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-0.5 h-1 bg-black rounded-r-sm"></div>
               </div>
-
-               {/* Add decorative floating elements behind phone */}
-               <motion.div animate={{y: [0, -10, 0]}} transition={{repeat: Infinity, duration: 4, ease: "easeInOut"}} className="absolute top-[20%] right-[15%] hidden md:flex items-center gap-3 bg-white/90 backdrop-blur-md px-4 py-3 rounded-2xl shadow-xl border border-white/50">
-                  <div className="w-10 h-10 rounded-full bg-[#dcf8c6] flex items-center justify-center text-[#128c7e] text-lg">🥗</div>
-                  <div>
-                    <div className="text-sm font-bold text-neutral-900">Salad Analyzed</div>
-                    <div className="text-xs text-neutral-500">+12g Protein</div>
-                  </div>
-               </motion.div>
-               <motion.div animate={{y: [0, 15, 0]}} transition={{repeat: Infinity, duration: 5, ease: "easeInOut"}} className="absolute bottom-[25%] left-[15%] hidden md:flex items-center gap-3 bg-white/90 backdrop-blur-md px-4 py-3 rounded-2xl shadow-xl border border-white/50">
-                  <div className="w-10 h-10 rounded-full bg-[#dcf8c6] flex items-center justify-center text-[#128c7e] text-lg">🔥</div>
-                  <div>
-                    <div className="text-sm font-bold text-neutral-900">1,650 kcal</div>
-                    <div className="text-xs text-neutral-500">Remaining: 550 kcal</div>
-                  </div>
-               </motion.div>
             </div>
           </div>
-        </motion.div>
-      </div>
 
+          {/* App Header */}
+          <div className="flex justify-between items-center px-4 py-2 bg-white">
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 border-2 border-gray-300 rounded flex items-center justify-center">
+                <div className="w-3 h-0.5 bg-gray-400 rounded-full"></div>
+              </div>
+              <span className="font-semibold text-sm">Schedule</span>
+            </div>
+            <span className="text-xs text-gray-500 font-medium cursor-pointer">See all {'>'}</span>
+          </div>
+
+          {/* App Content */}
+          <div className="flex-1 bg-white px-4 pt-2 overflow-hidden flex flex-col gap-3">
+            
+            {/* Card 1 */}
+            <div className="bg-[#FFF6F2] p-4 rounded-2xl w-full">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-[13px] font-semibold text-gray-800">Meeting with Kishore</h3>
+                  <p className="text-[10px] text-gray-500 mt-1">8:00 AM - 9:00 AM</p>
+                </div>
+                <span className="text-gray-400 text-lg leading-none -mt-1">...</span>
+              </div>
+              <div className="flex items-center justify-between mt-4">
+                <div className="flex -space-x-1.5">
+                  <div className="w-6 h-6 rounded-full bg-blue-500 border-2 border-[#FFF6F2] z-20"></div>
+                  <div className="w-6 h-6 rounded-full bg-yellow-500 border-2 border-[#FFF6F2] z-10"></div>
+                  <div className="w-6 h-6 rounded-full bg-gray-300 border-2 border-[#FFF6F2] z-0 flex items-center justify-center text-[8px] font-bold text-gray-600">2+</div>
+                </div>
+                <span className="px-2.5 py-1 bg-[#E8D4CC] text-[#8C6454] text-[9px] font-bold rounded-full">Marketing</span>
+              </div>
+              <p className="text-[9px] text-gray-400 mt-2 flex items-center gap-1">
+                on Gmeet
+              </p>
+            </div>
+
+            {/* Card 2 (Partially visible) */}
+            <div className="bg-[#EAF3FF] p-4 rounded-2xl w-full flex-1">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-[13px] font-semibold text-gray-800">Meeting with Manu</h3>
+                  <p className="text-[10px] text-gray-500 mt-1">8:00 AM - 9:00 AM</p>
+                </div>
+                <span className="text-gray-400 text-lg leading-none -mt-1">...</span>
+              </div>
+              <div className="flex items-center justify-between mt-4">
+                <div className="flex -space-x-1.5">
+                   <div className="w-6 h-6 rounded-full bg-blue-400 border-2 border-[#EAF3FF] z-20"></div>
+                   <div className="w-6 h-6 rounded-full bg-gray-500 border-2 border-[#EAF3FF] z-10"></div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
     </section>
+    </div>
   );
 }
