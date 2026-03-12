@@ -1,13 +1,17 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
 import { analyzeFood, analyzeFoodFromImage, handleHealthScore, handleDailySummary, sendWeeklyReport, DietService, getOrCreateUser, updateUser, UserDataService } from "../services/index.js";
-import { parseAIJson, downloadWhatsAppImage, sendWhatsAppMessage, sendMoreButton, sendMainOptions, logger } from "../utils/index.js";
+import { parseAIJson, downloadWhatsAppImage, sendWhatsAppMessage, sendWhatsAppTypingIndicator, sendMoreButton, sendMainOptions, logger } from "../utils/index.js";
 import { MealRepository } from "../database/index.js";
 import axios from "axios";
 import type { UserDocument } from "../schema/user.js";
 import { checkAndAlertGoals } from "../services/index.js";
 
 const router = Router();
+
+function sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 function parsePositiveInt(value: string): number | null {
     const parsed = Number.parseInt(value.trim(), 10);
@@ -147,6 +151,7 @@ router.post("/webhook/whatsapp", async (req: Request, res: Response) => {
 
     const from = message.from;
     const messageBody = message.text?.body || "";
+    const inboundMessageId: string | undefined = message.id;
     
     // Handle both button reply structures
     const buttonReply = message?.interactive?.button_reply?.id || 
@@ -248,6 +253,21 @@ router.post("/webhook/whatsapp", async (req: Request, res: Response) => {
         if (message.type === "image") {
             logger.info("Processing image message");
 
+            if (inboundMessageId) {
+                const typingShown = await sendWhatsAppTypingIndicator(inboundMessageId)
+                    .then(() => true)
+                    .catch((typingError) => {
+                        logger.warn("Failed to send WhatsApp typing indicator", typingError);
+                        return false;
+                    });
+
+                if (typingShown) {
+                    await sleep(1200);
+                }
+            } else {
+                logger.warn("Skipping WhatsApp typing indicator: missing inbound message id");
+            }
+
             const imageId = message.image.id;
 
             logger.info("Downloading image from WhatsApp");
@@ -284,6 +304,21 @@ router.post("/webhook/whatsapp", async (req: Request, res: Response) => {
 
             // Dynamic timeout based on message complexity
             const timeoutMs = isComplexMeal ? 30000 : 20000; // 30s for complex, 20s for simple
+
+            if (inboundMessageId) {
+                const typingShown = await sendWhatsAppTypingIndicator(inboundMessageId)
+                    .then(() => true)
+                    .catch((typingError) => {
+                        logger.warn("Failed to send WhatsApp typing indicator", typingError);
+                        return false;
+                    });
+
+                if (typingShown) {
+                    await sleep(1200);
+                }
+            } else {
+                logger.warn("Skipping WhatsApp typing indicator: missing inbound message id");
+            }
 
             // Add timeout for AI analysis
             aiResponse = await Promise.race([
