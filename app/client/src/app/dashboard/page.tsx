@@ -24,6 +24,15 @@ export default function DashboardPage() {
 	const [meals, setMeals] = useState(todayMeals)
 	const [macros, setMacros] = useState(macroData.map((m) => ({ ...m, value: 0, amount: 0 })))
 
+	const getMealTypeByTime = (dateValue: string) => {
+		const hour = new Date(dateValue).getHours()
+		if (hour < 5) return "Late Night"
+		if (hour < 11) return "Breakfast"
+		if (hour < 16) return "Lunch"
+		if (hour < 19) return "Snack"
+		return "Dinner"
+	}
+
 	useEffect(() => {
 		const phone = getStoredPhone()
 		if (!phone) return
@@ -42,12 +51,11 @@ export default function DashboardPage() {
 					: data.filter((m) => mealDateKey(m.date) === latestDate)
 
 				// Today's meals timeline
-				const mealTypes = ["Breakfast", "Lunch", "Snack", "Dinner"]
 				if (displayDayData.length > 0) {
 					setMeals(
 						displayDayData.map((m, idx) => ({
 							id: idx + 1,
-							type: mealTypes[idx % mealTypes.length],
+							type: getMealTypeByTime(m.date),
 							name: m.mealName,
 							calories: Math.round(m.calories),
 							protein: `${Math.round(m.protein)}g`,
