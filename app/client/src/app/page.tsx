@@ -8,12 +8,12 @@ import Footer from "./components/footer";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import FeaturesPage from "./components/landing/cards";
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-[#ece5dd] font-sans text-neutral-900 selection:bg-[#dcf8c6]">
       <Navbar />
-
       <main>
         <Hero />
 
@@ -25,7 +25,7 @@ export default function Home() {
                 Why <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#075e54] to-[#25d366]">FIT KAKA</span> Works
               </h2>
               <p className="text-lg text-neutral-600">
-                FIT KAKA simplifies nutrition tracking by bringing AI-powered analysis directly to WhatsApp. Instead of manual logging, users simply send a message or photo of their meal. The AI instantly identifies food items, estimates calories and nutrients, and logs the data automatically.
+                Send a photo or message of your food on WhatsApp and instantly get calories, protein, carbs, and fats powered by AI.
               </p>
             </div>
 
@@ -59,8 +59,8 @@ export default function Home() {
         </section>
 
         
-        <Features />
-
+        {/* <Features /> */}
+        <FeaturesPage />
 
 
         {/* CTA Section */}
