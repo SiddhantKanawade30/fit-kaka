@@ -22,8 +22,9 @@ function buildDashboardLink(phone: string, token: string): string | null {
     return null;
   }
 
-  const localHosts = new Set(["localhost", "127.0.0.1", "0.0.0.0"]);
-  if (localHosts.has(baseUrl.hostname.toLowerCase())) {
+  const host = baseUrl.hostname.toLowerCase();
+  const isPlaceholderHost = host === "example.com" || host.endsWith(".example.com");
+  if (isPlaceholderHost) {
     return null;
   }
 

@@ -9,14 +9,31 @@ export default function DirectDashboardPage() {
 
   useEffect(() => {
     const token = searchParams.get("token")
-    const phone = searchParams.get("phone")
+    const phoneFromQuery = searchParams.get("phone")
 
-    if (!token || !phone) {
+    if (!token) {
       router.replace("/login")
       return
     }
 
     try {
+      let phone = phoneFromQuery
+
+      if (!phone) {
+        const payloadPart = token.split(".")[1]
+        if (payloadPart) {
+          const normalized = payloadPart.replace(/-/g, "+").replace(/_/g, "/")
+          const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4)
+          const decoded = JSON.parse(atob(padded)) as { phone?: string }
+          phone = decoded.phone ?? null
+        }
+      }
+
+      if (!phone) {
+        router.replace("/login")
+        return
+      }
+
       localStorage.setItem("fitkaka_token", token)
       localStorage.setItem("fitkaka_phone", phone)
       router.replace("/dashboard")
