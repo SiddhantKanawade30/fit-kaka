@@ -1,8 +1,8 @@
 import { DietRepository } from "../database/index.js";
 import { UserRepository } from "../database/index.js";
 import { sendWhatsAppMessage } from "../utils/index.js";
-import { analyzeFood } from "./ai.service.js";
 import { UserDataService } from "./userData.service.js";
+import { generateContent } from "../config/gemini.js";
 
 interface DietPlan {
   breakfast: {
@@ -40,6 +40,65 @@ interface DietPlan {
 }
 
 export class DietService {
+  private static parseAndValidateDietPlan(raw: string): DietPlan {
+    const cleaned = raw
+      .replace(/```json/gi, "")
+      .replace(/```/g, "")
+      .trim();
+
+    const parsed = JSON.parse(cleaned) as Partial<DietPlan>;
+
+    const normalizeMeal = (meal: any) => {
+      const foods = Array.isArray(meal?.foods)
+        ? meal.foods.map((f: unknown) => String(f)).filter(Boolean)
+        : [];
+
+      if (foods.length === 0) {
+        throw new Error("Diet plan meal foods are missing");
+      }
+
+      return {
+        foods,
+        calories: Math.max(0, Math.round(Number(meal?.calories) || 0)),
+        proteins: Math.max(0, Number(meal?.proteins) || 0),
+        carbs: Math.max(0, Number(meal?.carbs) || 0),
+        fats: Math.max(0, Number(meal?.fats) || 0),
+      };
+    };
+
+    const breakfast = normalizeMeal(parsed.breakfast);
+    const lunch = normalizeMeal(parsed.lunch);
+    const evening_snack = normalizeMeal(parsed.evening_snack);
+    const dinner = normalizeMeal(parsed.dinner);
+
+    const totalDailyCalories =
+      Math.max(0, Math.round(Number(parsed.totalDailyCalories) || 0)) ||
+      Math.round(breakfast.calories + lunch.calories + evening_snack.calories + dinner.calories);
+
+    const totalDailyProteins =
+      Math.max(0, Number(parsed.totalDailyProteins) || 0) ||
+      Number((breakfast.proteins + lunch.proteins + evening_snack.proteins + dinner.proteins).toFixed(1));
+
+    const totalDailyCarbs =
+      Math.max(0, Number(parsed.totalDailyCarbs) || 0) ||
+      Number((breakfast.carbs + lunch.carbs + evening_snack.carbs + dinner.carbs).toFixed(1));
+
+    const totalDailyFats =
+      Math.max(0, Number(parsed.totalDailyFats) || 0) ||
+      Number((breakfast.fats + lunch.fats + evening_snack.fats + dinner.fats).toFixed(1));
+
+    return {
+      breakfast,
+      lunch,
+      evening_snack,
+      dinner,
+      totalDailyCalories,
+      totalDailyProteins,
+      totalDailyCarbs,
+      totalDailyFats,
+    };
+  }
+
   static async handleCustomDiet(user: string) {
     try {
       // Check if user exists in database
@@ -176,90 +235,68 @@ export class DietService {
 
   static async generateDietPlan(userPhone: string, isVegetarian: boolean, goal: string): Promise<DietPlan> {
     try {
-      // Base calorie calculation based on goal
-      let baseCalories = 2000;
-      if (goal === 'weight_loss') baseCalories = 1800;
-      else if (goal === 'weight_gain') baseCalories = 2500;
-      else if (goal === 'muscle_gain') baseCalories = 2800;
+      const user = await UserRepository.findByPhone(userPhone);
 
-      // Generate diet based on vegetarian preference
-      const mealOptions = this.getMealOptions(isVegetarian);
+      const prompt = `You are an expert clinical nutritionist.
+Create a realistic 1-day meal plan in strict JSON for this user.
 
-      const dietPlan: DietPlan = {
-        breakfast: {
-          foods: mealOptions.breakfast,
-          calories: Math.round(baseCalories * 0.25),
-          proteins: Math.round(baseCalories * 0.25 * 0.2 / 4),
-          carbs: Math.round(baseCalories * 0.25 * 0.5 / 4),
-          fats: Math.round(baseCalories * 0.25 * 0.3 / 9)
-        },
-        lunch: {
-          foods: mealOptions.lunch,
-          calories: Math.round(baseCalories * 0.35),
-          proteins: Math.round(baseCalories * 0.35 * 0.25 / 4),
-          carbs: Math.round(baseCalories * 0.35 * 0.45 / 4),
-          fats: Math.round(baseCalories * 0.35 * 0.3 / 9)
-        },
-        evening_snack: {
-          foods: mealOptions.snack,
-          calories: Math.round(baseCalories * 0.1),
-          proteins: Math.round(baseCalories * 0.1 * 0.15 / 4),
-          carbs: Math.round(baseCalories * 0.1 * 0.6 / 4),
-          fats: Math.round(baseCalories * 0.1 * 0.25 / 9)
-        },
-        dinner: {
-          foods: mealOptions.dinner,
-          calories: Math.round(baseCalories * 0.3),
-          proteins: Math.round(baseCalories * 0.3 * 0.3 / 4),
-          carbs: Math.round(baseCalories * 0.3 * 0.4 / 4),
-          fats: Math.round(baseCalories * 0.3 * 0.3 / 9)
-        },
-        totalDailyCalories: baseCalories,
-        totalDailyProteins: Math.round(baseCalories * 0.25 / 4),
-        totalDailyCarbs: Math.round(baseCalories * 0.45 / 4),
-        totalDailyFats: Math.round(baseCalories * 0.3 / 9)
-      };
+User profile:
+- Goal: ${goal}
+- Preference: ${isVegetarian ? "vegetarian" : "non-vegetarian"}
+- Age: ${user?.age ?? "unknown"}
+- Height (cm): ${user?.height ?? "unknown"}
+- Weight (kg): ${user?.weight ?? "unknown"}
+- Daily calorie target (if available): ${user?.dailyCalories ?? "not set"}
+- Daily protein target (if available): ${user?.dailyProteinIntake ?? "not set"}
 
-      return dietPlan;
+Rules:
+- Keep foods practical for Indian users.
+- Return exactly 2-4 food items per meal.
+- Keep calories and macros internally consistent and realistic.
+- Output ONLY valid JSON (no markdown, no commentary).
+
+JSON schema:
+{
+  "breakfast": {"foods": ["..."], "calories": number, "proteins": number, "carbs": number, "fats": number},
+  "lunch": {"foods": ["..."], "calories": number, "proteins": number, "carbs": number, "fats": number},
+  "evening_snack": {"foods": ["..."], "calories": number, "proteins": number, "carbs": number, "fats": number},
+  "dinner": {"foods": ["..."], "calories": number, "proteins": number, "carbs": number, "fats": number},
+  "totalDailyCalories": number,
+  "totalDailyProteins": number,
+  "totalDailyCarbs": number,
+  "totalDailyFats": number
+}`;
+
+      const aiResponse = await generateContent(prompt);
+      return this.parseAndValidateDietPlan(aiResponse);
     } catch (error) {
       console.error("Error generating diet plan:", error);
-      throw error;
+      throw new Error("Failed to generate diet plan from AI");
     }
   }
 
-  static getMealOptions(isVegetarian: boolean) {
-    if (isVegetarian) {
-      return {
-        breakfast: ["Oatmeal with fresh berries and almonds", "Greek yogurt with honey and walnuts", "Vegetable poha with peanuts", "Paneer bhurji with whole wheat toast and butter"],
-        lunch: ["Brown rice with lentil dal and mixed vegetables", "Quinoa salad with roasted vegetables and chickpeas", "Whole wheat pasta with tomato sauce and vegetables", "Mixed vegetable curry with 2 whole wheat rotis"],
-        snack: ["Fresh fruit salad with chia seeds", "Mixed nuts and dried fruits (30g)", "Vegetable soup with croutons", "Protein smoothie with spinach and banana"],
-        dinner: ["Grilled vegetables with quinoa and olive oil", "Lentil soup with whole grain bread", "Stir-fried tofu with brown rice and vegetables", "Palak paneer with 2 whole wheat rotis"]
-      };
-    } else {
-      return {
-        breakfast: ["3 egg omelette with whole wheat toast and avocado", "Grilled chicken sausage with oatmeal and honey", "Greek yogurt with 2 boiled eggs", "Protein shake with eggs and banana"],
-        lunch: ["150g grilled chicken breast with brown rice and vegetables", "Fish curry with whole wheat roti and salad", "Chicken salad with quinoa and olive oil dressing", "Mutton biryani (less oil) with cucumber salad"],
-        snack: ["2 boiled eggs with black pepper", "Grilled chicken sandwich (whole wheat)", "Protein shake with peanut butter", "Greek yogurt with chicken strips"],
-        dinner: ["200g grilled salmon with steamed vegetables", "Chicken stir-fry with brown rice and broccoli", "Mutton stew with vegetables and whole wheat bread", "Egg curry with whole wheat bread and salad"]
-      };
+  static async sendDietPlan(user: string, dietPlan: unknown) {
+    let safeDietPlan: DietPlan;
+    try {
+      safeDietPlan = this.parseAndValidateDietPlan(JSON.stringify(dietPlan));
+    } catch {
+      throw new Error("Invalid diet plan format");
     }
-  }
 
-  static async sendDietPlan(user: string, dietPlan: DietPlan) {
     const message = `*Your Personalized Diet Plan*\n\n` +
-      `🌅 *Breakfast* (${dietPlan.breakfast.calories} cal)\n` +
-      `${dietPlan.breakfast.foods.join(', ')}\n\n` +
-      `☀️ *Lunch* (${dietPlan.lunch.calories} cal)\n` +
-      `${dietPlan.lunch.foods.join(', ')}\n\n` +
-      `🌤️ *Evening Snack* (${dietPlan.evening_snack.calories} cal)\n` +
-      `${dietPlan.evening_snack.foods.join(', ')}\n\n` +
-      `🌙 *Dinner* (${dietPlan.dinner.calories} cal)\n` +
-      `${dietPlan.dinner.foods.join(', ')}\n\n` +
+      `🌅 *Breakfast* (${safeDietPlan.breakfast.calories} cal)\n` +
+      `${safeDietPlan.breakfast.foods.join(', ')}\n\n` +
+      `☀️ *Lunch* (${safeDietPlan.lunch.calories} cal)\n` +
+      `${safeDietPlan.lunch.foods.join(', ')}\n\n` +
+      `🌤️ *Evening Snack* (${safeDietPlan.evening_snack.calories} cal)\n` +
+      `${safeDietPlan.evening_snack.foods.join(', ')}\n\n` +
+      `🌙 *Dinner* (${safeDietPlan.dinner.calories} cal)\n` +
+      `${safeDietPlan.dinner.foods.join(', ')}\n\n` +
       `*Daily Totals*\n` +
-      `🔥 Calories: ${dietPlan.totalDailyCalories} kcal\n` +
-      `🥩 Protein: ${dietPlan.totalDailyProteins}g\n` +
-      `🍞 Carbs: ${dietPlan.totalDailyCarbs}g\n` +
-      `🧈 Fats: ${dietPlan.totalDailyFats}g\n\n` +
+      `🔥 Calories: ${safeDietPlan.totalDailyCalories} kcal\n` +
+      `🥩 Protein: ${safeDietPlan.totalDailyProteins}g\n` +
+      `🍞 Carbs: ${safeDietPlan.totalDailyCarbs}g\n` +
+      `🧈 Fats: ${safeDietPlan.totalDailyFats}g\n\n` +
       `Your diet plan has been saved successfully! 🎯`;
 
     await sendWhatsAppMessage(user, message);
@@ -297,3 +334,4 @@ export class DietService {
     }
   }
 }
+

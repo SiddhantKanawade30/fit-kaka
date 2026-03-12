@@ -45,7 +45,7 @@ export class UserRepository {
 
   static async updateUser(
     phone: string,
-    data: Partial<Pick<UserDocument, "age" | "height" | "weight" | "dailyProteinIntake" | "dailyCalories" | "dailyCarbs" | "dailyFats" | "goalProfileCompleted" | "goalSetupStep">>
+    data: Partial<Pick<UserDocument, "age" | "height" | "weight" | "dailyProteinIntake" | "dailyCalories" | "dailyCarbs" | "dailyFats" | "goalProfileCompleted" | "goalSetupStep" | "ageUpdatedAt" | "heightUpdatedAt" | "weightUpdatedAt">>
   ): Promise<UserDocument | null> {
     try {
       return await User.findOneAndUpdate({ phone }, data, {
