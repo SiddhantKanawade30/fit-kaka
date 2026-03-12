@@ -44,6 +44,48 @@ export async function sendWhatsAppMessage(to: string, text: string) {
     }
 }
 
+export async function sendWhatsAppTypingIndicator(messageId: string) {
+    const token = process.env.WHATSAPP_TOKEN;
+    const phoneNumberId = process.env.PHONE_NUMBER_ID;
+
+    if (!token || !phoneNumberId) {
+        console.error("Missing WhatsApp credentials:", {
+            token: token ? "present" : "missing",
+            phoneNumberId: phoneNumberId ? "present" : "missing"
+        });
+        throw new Error("WhatsApp credentials not configured");
+    }
+
+    try {
+        const response = await axios.post(
+            `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`,
+            {
+                messaging_product: "whatsapp",
+                status: "read",
+                message_id: messageId,
+                typing_indicator: {
+                    type: "text",
+                },
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        console.log("WhatsApp typing indicator sent successfully:", { messageId });
+        return response.data;
+    } catch (error) {
+        console.error("Error sending WhatsApp typing indicator:", {
+            error: (error as any).response?.data || (error as Error).message,
+            status: (error as any).response?.status,
+            messageId,
+        });
+        throw error;
+    }
+}
+
 export async function sendMoreButton(to: string, text: string) {
     const token = process.env.WHATSAPP_TOKEN;
     const phoneNumberId = process.env.PHONE_NUMBER_ID;
