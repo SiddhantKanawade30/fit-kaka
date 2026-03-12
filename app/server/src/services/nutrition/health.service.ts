@@ -1,5 +1,25 @@
 import { MealRepository } from "../../database/index.js";
 import { sendWhatsAppMessage } from "../../utils/index.js";
+import jwt from "jsonwebtoken";
+
+const DASHBOARD_BASE_URL = process.env.DASHBOARD_BASE_URL?.trim() ?? "";
+
+function buildDashboardLink(token: string): string | null {
+  if (!DASHBOARD_BASE_URL) {
+    return null;
+  }
+
+  let baseUrl: URL;
+  try {
+    baseUrl = new URL(DASHBOARD_BASE_URL);
+  } catch {
+    return null;
+  }
+
+  const directUrl = new URL("/direct", baseUrl);
+  directUrl.searchParams.set("token", token);
+  return directUrl.toString();
+}
 
 export function calculateHealthScore(proteins: number, carbs: number, fats: number, calories: number): number {
   // Simple health scoring algorithm
@@ -24,9 +44,21 @@ export function calculateHealthScore(proteins: number, carbs: number, fats: numb
 export async function handleHealthScore(user: string) {
   try {
     const todayMeals = await MealRepository.getTodayMeals(user);
+
+    // Use compact payload key `p` to keep token/link shorter.
+    const dashboardToken = jwt.sign(
+      { p: user },
+      process.env.JWT_TOKEN || "fallback-secret-key",
+      { expiresIn: "12h" }
+    );
+    const dashboardLink = buildDashboardLink(dashboardToken);
     
     if (!todayMeals || todayMeals.length === 0) {
-      await sendWhatsAppMessage(user, "No meals found for today! 🍽️\n\nStart tracking your meals to get a health score!");
+      await sendWhatsAppMessage(
+        user,
+        "No meals found for today! 🍽️\n\nStart tracking your meals to get a health score!" +
+          (dashboardLink ? `\n\n🔗 Dashboard:\n${dashboardLink}` : "")
+      );
       return;
     }
 
@@ -64,7 +96,8 @@ export async function handleHealthScore(user: string) {
       `🥩 Total Proteins: ${totalNutrition.proteins}g\n` +
       `🍞 Total Carbs: ${totalNutrition.carbs}g\n` +
       `🧈 Total Fats: ${totalNutrition.fats}g\n\n` +
-      `${score >= 8 ? '🎉 Excellent nutrition today!' : score >= 6 ? '👍 Good day overall!' : '💪 Room for improvement!'}`;
+      `${score >= 8 ? '🎉 Excellent nutrition today!' : score >= 6 ? '👍 Good day overall!' : '💪 Room for improvement!'}` +
+      (dashboardLink ? `\n\n🔗 Dashboard:\n${dashboardLink}` : "");
 
     await sendWhatsAppMessage(user, message);
   } catch (error) {

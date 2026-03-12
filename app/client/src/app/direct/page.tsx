@@ -23,8 +23,8 @@ function DirectHandler() {
       if (payloadPart) {
         const normalized = payloadPart.replace(/-/g, '+').replace(/_/g, '/');
         const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4);
-        const decoded = JSON.parse(atob(padded)) as { phone?: string };
-        phone = decoded.phone ?? null;
+        const decoded = JSON.parse(atob(padded)) as { phone?: string; p?: string };
+        phone = decoded.phone ?? decoded.p ?? null;
       }
     } catch {
       // malformed token
