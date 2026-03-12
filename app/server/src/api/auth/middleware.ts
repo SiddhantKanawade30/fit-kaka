@@ -26,7 +26,6 @@ try{
     const decodedToken = jwt.verify(token as string, process.env.JWT_TOKEN || 'fallback-secret-key')
     console.log('Middleware: Decoded token:', decodedToken);
 
-    //@ts-ignore
     req.phone = (decodedToken as any).phone;
     console.log('Middleware: Set req.phone to:', req.phone);
     next()

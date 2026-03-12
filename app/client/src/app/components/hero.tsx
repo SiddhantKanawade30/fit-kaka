@@ -3,7 +3,7 @@ export default function Hero() {
     <div className="w-full bg-white/50">
       <section className="relative w-full mx-auto overflow-hidden bg-white/50 pb-0 pt-20 rounded-b-[3rem]">
         {/* Background Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white/100 via-green-50/50 to-green-700/50 pointer-events-none z-0" />
+        <div className="absolute inset-0 bg-linear-to-b from-white via-green-50/50 to-green-700/50 pointer-events-none z-0" />
 
         {/* Concentric Rings (Decorative) */}
         <div className="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border-2 border-white/60 rounded-full pointer-events-none z-0" />
@@ -30,13 +30,13 @@ export default function Hero() {
             href="https://wa.me/15551495897?text=Hi" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="mt-10 inline-block px-8 py-3.5 bg-gradient-to-b from-[#4a4a4a] to-[#222222] border border-[#5a5a5a] text-white text-sm font-semibold rounded-lg shadow-lg hover:from-[#3a3a3a] hover:to-[#111111] transition-all duration-200"
+            className="mt-10 inline-block px-8 py-3.5 bg-linear-to-b from-[#4a4a4a] to-[#222222] border border-[#5a5a5a] text-white text-sm font-semibold rounded-lg shadow-lg hover:from-[#3a3a3a] hover:to-[#111111] transition-all duration-200"
           >
             Get Started
           </a>
 
           {/* Phone Mockup */}
-          <div className="mt-16 relative w-[300px] h-[380px] bg-white border-[10px] border-black rounded-t-[2.5rem] overflow-hidden shadow-2xl flex flex-col mx-auto translate-y-4">
+          <div className="mt-16 relative w-[300px] h-[380px] bg-white border-10 border-black rounded-t-[2.5rem] overflow-hidden shadow-2xl flex flex-col mx-auto translate-y-4">
 
             {/* Dynamic Island / Camera Notch */}
             <div className="absolute top-2 left-1/2 -translate-x-1/2 w-24 h-7 bg-black rounded-full z-20 flex justify-end items-center px-3">
@@ -52,7 +52,7 @@ export default function Hero() {
                 {/* Wifi Icon */}
                 <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12,3C7.79,3 3.7,4.41 0.38,6.9L12,21.05l11.62-14.15C20.3,4.41 16.21,3 12,3z" /></svg>
                 {/* Battery Icon */}
-                <div className="w-5 h-2.5 border border-black rounded-[3px] p-[1px] relative">
+                <div className="w-5 h-2.5 border border-black rounded-[3px] p-px relative">
                   <div className="bg-black w-[80%] h-full rounded-[1px]"></div>
                   <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-0.5 h-1 bg-black rounded-r-sm"></div>
                 </div>

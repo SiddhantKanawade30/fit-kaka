@@ -362,7 +362,8 @@ I'll analyze your meals and provide detailed nutrition info instantly! 🚀`;
         // Save to database if valid data
         if (nutrition.food !== "Could not analyze food") {
             try {
-                await MealRepository.create(from, nutrition);
+                const saveOptions = inboundMessageId ? { sourceMessageId: inboundMessageId } : undefined;
+                await MealRepository.create(from, nutrition, saveOptions);
                 logger.info("Meal saved successfully");
             } catch (dbError) {
                 logger.warn("Database save failed, continuing with response", dbError);

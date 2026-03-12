@@ -19,7 +19,10 @@ export async function sendWhatsAppMessage(to: string, text: string) {
                 messaging_product: "whatsapp",
                 to,
                 type: "text",
-                text: { body: text },
+                text: {
+                    preview_url: true,
+                    body: text,
+                },
             },
             {
                 headers: {

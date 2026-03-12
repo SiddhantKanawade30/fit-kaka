@@ -286,7 +286,7 @@ export default function DashboardPage() {
 				</Card>
 
 				{/* AI Tip of the Day */}
-				<Card className="bg-gradient-to-br from-green-50 to-emerald-100/50 dark:from-green-950/30 dark:to-emerald-900/20 border-green-200 dark:border-green-800 hover:shadow-md transition-shadow">
+				<Card className="bg-linear-to-br from-green-50 to-emerald-100/50 dark:from-green-950/30 dark:to-emerald-900/20 border-green-200 dark:border-green-800 hover:shadow-md transition-shadow">
 					<CardHeader>
 						<div className="flex items-center gap-2 text-green-700 dark:text-green-400 mb-1">
 							<Sparkles className="size-5" />

@@ -69,7 +69,7 @@ export async function sendMainOptions(to: string) {
         
         console.log("Main options sent successfully:", response.data);
     } catch (error) {
-        console.error("Error sending main options:", error instanceof Error ? error.response?.data || error.message : error);
+        console.error("Error sending main options:", error instanceof Error ? (error as any).response?.data || error.message : error);
         throw error;
     }
 }
