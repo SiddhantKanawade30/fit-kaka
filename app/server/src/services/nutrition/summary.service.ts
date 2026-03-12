@@ -10,7 +10,7 @@ function getDateKeyInTimezone(date: Date, timeZone: string) {
   return new Intl.DateTimeFormat("en-CA", { timeZone }).format(date);
 }
 
-function buildDashboardLink(phone: string, token: string): string | null {
+function buildDashboardLink(token: string): string | null {
   if (!DASHBOARD_BASE_URL) {
     return null;
   }
@@ -30,7 +30,6 @@ function buildDashboardLink(phone: string, token: string): string | null {
 
   const directUrl = new URL("/direct", baseUrl);
   directUrl.searchParams.set("token", token);
-  directUrl.searchParams.set("phone", phone);
 
   return directUrl.toString();
 }
@@ -102,7 +101,7 @@ export async function handleDailySummary(user: string) {
       process.env.JWT_TOKEN || "fallback-secret-key",
       { expiresIn: "12h" }
     );
-    const dashboardLink = buildDashboardLink(user, dashboardToken);
+    const dashboardLink = buildDashboardLink(dashboardToken);
 
     const message = `📈 *Daily Nutrition Summary*\n\n` +
       `🗓 Date: ${todayKey} (${SUMMARY_TIMEZONE})\n` +
@@ -113,7 +112,7 @@ export async function handleDailySummary(user: string) {
       `🧈 Total Fats: ${roundedTotals.fats}g\n\n` +
       `${progressLines.length > 0 ? `🎯 *Goal Progress*\n${progressLines.join("\n")}\n\n` : ""}` +
       (dashboardLink
-        ? `🔗 *View your dashboard*\n${dashboardLink}`
+        ? `🔗 View your dashboard:\n${dashboardLink}`
         : `🔗 *Dashboard link unavailable*\nPlease set DASHBOARD_BASE_URL to your public client URL.`);
 
     await sendWhatsAppMessage(user, message);
