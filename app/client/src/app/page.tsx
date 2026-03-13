@@ -62,6 +62,33 @@ export default function Home() {
         {/* <Features /> */}
         <FeaturesPage />
 
+        {/* Dashboard Preview Section */}
+        <section className="py-24 bg-white/50 relative z-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-3xl mx-auto mb-16">
+              <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-neutral-900 mb-6">
+                Track Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#075e54] to-[#25d366]">Nutrition Journey</span>
+              </h2>
+              <p className="text-lg text-neutral-600">
+                Get comprehensive insights into your daily nutrition with our beautiful dashboard
+              </p>
+            </div>
+
+            <div className="relative max-w-5xl mx-auto">
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl border-8 border-neutral-900">
+                <img 
+                  src="/dashboard.png" 
+                  alt="Fit-Kaka Dashboard Preview"
+                  className="w-full h-auto"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+              </div>
+              
+              
+            </div>
+          </div>
+        </section>
+
 
         {/* CTA Section */}
         <section className="py-32 relative overflow-hidden">
@@ -99,13 +126,15 @@ export default function Home() {
               transition={{ delay: 0.2 }}
               className="pt-8"
             >
-              <Link
-                href="/dashboard"
+              <a
+                href="https://wa.me/15551495897?text=Hi"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 px-10 py-5 rounded-full bg-white text-neutral-900 font-bold text-xl hover:bg-neutral-100 hover:scale-105 transition-all shadow-[0_0_40px_rgba(255,255,255,0.2)]"
               >
                 Get Started with WhatsApp
                 <ArrowRight className="size-6 text-[#25d366]" />
-              </Link>
+              </a>
             </motion.div>
           </div>
         </section>
