@@ -64,8 +64,6 @@ FIT KAKA combines the convenience of WhatsApp with AI-powered nutrition analysis
 
 ---
 
-# 🖼️ Screenshots
-
 ## Landing Page
 
 <img width="1898" height="907" alt="Landing Page" src="https://github.com/user-attachments/assets/a77f5d53-e2a7-4140-aae5-9b75d1707188" />
