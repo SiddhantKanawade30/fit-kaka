@@ -16,7 +16,7 @@ FIT KAKA combines the convenience of WhatsApp with AI-powered nutrition analysis
 
 ---
 
-# 🚀 Features
+# Features
 
 ## 📸 AI Food Recognition
 
@@ -50,7 +50,7 @@ FIT KAKA combines the convenience of WhatsApp with AI-powered nutrition analysis
 
 ---
 
-# 🌐 How to get started ?
+# How to get started ?
 
 1. Visit the website
 2. Click the **Get Started** button
@@ -63,6 +63,11 @@ FIT KAKA combines the convenience of WhatsApp with AI-powered nutrition analysis
 6. Track your progress from the dashboard
 
 ---
+
+## Demo
+
+
+https://github.com/user-attachments/assets/f5cfb251-8ef9-413a-9045-3d048c90ca0a
 
 ## Landing Page
 
@@ -80,8 +85,6 @@ FIT KAKA combines the convenience of WhatsApp with AI-powered nutrition analysis
 
 <img width="1902" height="905" alt="Dashboard" src="https://github.com/user-attachments/assets/cdcf27ee-9975-4de5-94af-74a6ff3ceefa" />
 
-## Demo
-<iframe width="560" height="315" src="https://www.youtube.com/embed/vB5chik-Zf4?si=Fah7m6_IXm-6BEhe" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 ---
 
 # 🛠️ Tech Stack
