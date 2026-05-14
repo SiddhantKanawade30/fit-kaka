@@ -16,6 +16,18 @@ FIT KAKA combines the convenience of WhatsApp with AI-powered nutrition analysis
 
 ---
 
+# 🎯 Problem FIT KAKA Solves
+
+Most nutrition tracking applications are difficult to use consistently because they require:
+
+* Manual food searches
+* Portion size estimation
+* Repetitive meal logging
+* Switching between multiple screens
+
+FIT KAKA removes this friction by allowing users to track meals naturally through WhatsApp — a platform they already use every day.
+
+
 # Features
 
 ## 📸 AI Food Recognition
@@ -50,6 +62,25 @@ FIT KAKA combines the convenience of WhatsApp with AI-powered nutrition analysis
 
 ---
 
+## Demo
+https://github.com/user-attachments/assets/f5cfb251-8ef9-413a-9045-3d048c90ca0a
+
+## Landing Page
+<img width="1898" height="907" alt="Landing Page" src="https://github.com/user-attachments/assets/a77f5d53-e2a7-4140-aae5-9b75d1707188" />
+
+---
+
+## WhatsApp AI Nutrition Analysis
+<img width="1398" height="975" alt="WhatsApp Analysis" src="https://github.com/user-attachments/assets/74611e58-7813-427b-a3e4-acc650050018" />
+
+---
+
+## Dashboard & Analytics
+
+<img width="1902" height="905" alt="Dashboard" src="https://github.com/user-attachments/assets/cdcf27ee-9975-4de5-94af-74a6ff3ceefa" />
+
+---
+
 # How to get started ?
 
 1. Visit the website
@@ -61,29 +92,6 @@ FIT KAKA combines the convenience of WhatsApp with AI-powered nutrition analysis
    * Or a text description 📝
 5. Receive instant AI-powered nutrition analysis
 6. Track your progress from the dashboard
-
----
-
-## Demo
-
-
-https://github.com/user-attachments/assets/f5cfb251-8ef9-413a-9045-3d048c90ca0a
-
-## Landing Page
-
-<img width="1898" height="907" alt="Landing Page" src="https://github.com/user-attachments/assets/a77f5d53-e2a7-4140-aae5-9b75d1707188" />
-
----
-
-## WhatsApp AI Nutrition Analysis
-
-<img width="1398" height="975" alt="WhatsApp Analysis" src="https://github.com/user-attachments/assets/74611e58-7813-427b-a3e4-acc650050018" />
-
----
-
-## Dashboard & Analytics
-
-<img width="1902" height="905" alt="Dashboard" src="https://github.com/user-attachments/assets/cdcf27ee-9975-4de5-94af-74a6ff3ceefa" />
 
 ---
 
@@ -111,18 +119,6 @@ https://github.com/user-attachments/assets/f5cfb251-8ef9-413a-9045-3d048c90ca0a
 * MongoDB
 
 ---
-
-# 🎯 Problem FIT KAKA Solves
-
-Most nutrition tracking applications are difficult to use consistently because they require:
-
-* Manual food searches
-* Portion size estimation
-* Repetitive meal logging
-* Switching between multiple screens
-
-FIT KAKA removes this friction by allowing users to track meals naturally through WhatsApp — a platform they already use every day.
-
 
 # ⭐ Support
 
