@@ -17,12 +17,12 @@ export default function Home() {
       <main>
         <Hero />
 
-        {/* Why FIT KAKA Works Section */}
+        {/* How FIT KAKA Works Section */}
         <section id="highlights" className="py-24 border-y border-neutral-100 bg-white/50 backdrop-blur-xl relative z-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-16">
               <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-neutral-900 mb-6">
-                Why <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#075e54] to-[#25d366]">FIT KAKA</span> Works
+                How <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#075e54] to-[#25d366]">FIT KAKA</span> Works
               </h2>
               <p className="text-lg text-neutral-600">
                 Send a photo or message of your food on WhatsApp and instantly get calories, protein, carbs, and fats powered by AI.
@@ -58,7 +58,30 @@ export default function Home() {
           </div>
         </section>
 
-        
+        {/* Demo Video Section */}
+        <section className="py-24 bg-[#f8fafc] relative z-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-3xl mx-auto mb-12">
+              <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-neutral-900 mb-6">
+                See FIT KAKA in Action
+              </h2>
+              <p className="text-lg text-neutral-600">
+                Watch the quick demo to see how easy it is to log meals, get nutrition insights, and use WhatsApp to track your diet.
+              </p>
+            </div>
+
+            <div className="relative overflow-hidden rounded-3xl shadow-2xl border border-neutral-200 mx-auto max-w-5xl">
+              <video
+                controls
+                className="w-full h-auto rounded-3xl bg-black"
+              >
+                <source src="/video.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          </div>
+        </section>
+
         {/* <Features /> */}
         <FeaturesPage />
 
