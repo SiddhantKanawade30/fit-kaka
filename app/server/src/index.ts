@@ -10,6 +10,16 @@ import cors from "cors";
 
 dotenv.config();
 
+// Global safety net — prevents any unhandled promise rejection or uncaught
+// exception from crashing the process. Log it and keep running.
+process.on("unhandledRejection", (reason) => {
+    console.error("[Process] Unhandled promise rejection:", reason);
+});
+
+process.on("uncaughtException", (error) => {
+    console.error("[Process] Uncaught exception:", error);
+});
+
 const app = express();
 
 app.use(express.urlencoded({ extended: false }));

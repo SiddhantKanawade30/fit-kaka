@@ -3,15 +3,22 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+// Warn at startup but do NOT throw — a missing key should degrade gracefully,
+// not crash the entire process.
 if (!process.env.GEMINI_API_KEY) {
-    throw new Error("GEMINI_API_KEY is not set in environment variables");
+    console.error("[Gemini] WARNING: GEMINI_API_KEY is not set. AI features will be unavailable.");
 }
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// genAI may be null when the key is absent; every exported function checks for this.
+const genAI = process.env.GEMINI_API_KEY
+    ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+    : null;
 
-export const generateContent = async (prompt: string) => {
+export const generateContent = async (prompt: string): Promise<string> => {
+    if (!genAI) {
+        throw new Error("Gemini API key is not configured.");
+    }
     try {
-        // Use gemini-2.5-flash model
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         
         const result = await model.generateContent(prompt);
@@ -29,11 +36,13 @@ export const generateContent = async (prompt: string) => {
     }
 };
 
-export const generateContentWithImage = async (prompt: string, imageData: Buffer, mimeType: string) => {
+export const generateContentWithImage = async (prompt: string, imageData: Buffer, mimeType: string): Promise<string> => {
+    if (!genAI) {
+        throw new Error("Gemini API key is not configured.");
+    }
     try {
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         
-        // Validate image data
         if (!imageData || imageData.length === 0) {
             throw new Error("Invalid image data");
         }
@@ -65,7 +74,10 @@ export const generateContentWithImage = async (prompt: string, imageData: Buffer
 /**
  * Alternative method using direct URL instead of base64
  */
-export const generateContentWithImageUrl = async (prompt: string, imageUrl: string) => {
+export const generateContentWithImageUrl = async (prompt: string, imageUrl: string): Promise<string> => {
+    if (!genAI) {
+        throw new Error("Gemini API key is not configured.");
+    }
     try {
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         
