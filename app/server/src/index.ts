@@ -40,7 +40,7 @@ app.use("/auth", loginRouter);
 app.use("/dashboard", userMiddleware, dashboardRouter);
 
 // Health check
-app.get("/", (req, res) => {
+app.get("/health", (req, res) => {
     res.send("Fit-Kaka Engine Online");
 });
 
